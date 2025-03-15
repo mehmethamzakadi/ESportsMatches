@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const apiKey = process.env.PANDASCORE_API_KEY;
     
@@ -11,6 +11,11 @@ export async function GET() {
       );
     }
 
+    // URL'den sayfalama parametrelerini al
+    const { searchParams } = new URL(request.url);
+    const page = searchParams.get('page') || '1';
+    const perPage = searchParams.get('perPage') || '100';
+
     // Gelecek 7 günün maçlarını getir
     const today = new Date();
     const sevenDaysLater = new Date(today);
@@ -20,7 +25,7 @@ export async function GET() {
     const sevenDaysLaterFormatted = sevenDaysLater.toISOString().split('T')[0];
     
     const response = await fetch(
-      `https://api.pandascore.co/csgo/matches/upcoming`,
+      `https://api.pandascore.co/csgo/matches/upcoming?page=${page}&per_page=${perPage}`,
       {
         headers: {
           'Authorization': `Bearer ${apiKey}`,

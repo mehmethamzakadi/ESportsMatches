@@ -6,7 +6,7 @@ import MatchList from '@/components/MatchList';
 import { usePastMatches } from '@/lib/hooks';
 
 export default function PastMatches() {
-  const { matches, isLoading, isError } = usePastMatches();
+  const { matches, isLoading, isError } = usePastMatches(1, 100);
 
   return (
     <div>

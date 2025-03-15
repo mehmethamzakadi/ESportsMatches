@@ -6,7 +6,7 @@ import MatchList from '@/components/MatchList';
 import { useUpcomingMatches } from '@/lib/hooks';
 
 export default function Home() {
-  const { matches, isLoading, isError } = useUpcomingMatches();
+  const { matches, isLoading, isError } = useUpcomingMatches(1, 100);
 
   return (
     <div>

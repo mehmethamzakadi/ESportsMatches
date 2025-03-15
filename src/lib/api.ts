@@ -1,10 +1,10 @@
 import { Match } from '@/types/match';
 
 // Gelecek maçları getir
-export async function getUpcomingMatches(page = 1, perPage = 50): Promise<Match[]> {
+export async function getUpcomingMatches(page = 1, perPage = 100): Promise<Match[]> {
   try {
     // Kendi API endpoint'imizi kullanıyoruz
-    const response = await fetch('/api/matches/upcoming');
+    const response = await fetch(`/api/matches/upcoming?page=${page}&perPage=${perPage}`);
     
     if (!response.ok) {
       throw new Error(`API responded with status: ${response.status}`);
@@ -18,10 +18,10 @@ export async function getUpcomingMatches(page = 1, perPage = 50): Promise<Match[
 }
 
 // Aktif maçları getir
-export async function getRunningMatches(page = 1, perPage = 50): Promise<Match[]> {
+export async function getRunningMatches(page = 1, perPage = 100): Promise<Match[]> {
   try {
     // Kendi API endpoint'imizi kullanıyoruz
-    const response = await fetch('/api/matches/running');
+    const response = await fetch(`/api/matches/running?page=${page}&perPage=${perPage}`);
     
     if (!response.ok) {
       throw new Error(`API responded with status: ${response.status}`);
@@ -35,10 +35,10 @@ export async function getRunningMatches(page = 1, perPage = 50): Promise<Match[]
 }
 
 // Geçmiş maçları getir
-export async function getPastMatches(page = 1, perPage = 50): Promise<Match[]> {
+export async function getPastMatches(page = 1, perPage = 100): Promise<Match[]> {
   try {
     // Kendi API endpoint'imizi kullanıyoruz
-    const response = await fetch('/api/matches/past');
+    const response = await fetch(`/api/matches/past?page=${page}&perPage=${perPage}`);
     
     if (!response.ok) {
       throw new Error(`API responded with status: ${response.status}`);

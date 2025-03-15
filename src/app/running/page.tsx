@@ -6,7 +6,7 @@ import MatchList from '@/components/MatchList';
 import { useRunningMatches } from '@/lib/hooks';
 
 export default function RunningMatches() {
-  const { matches, isLoading, isError } = useRunningMatches();
+  const { matches, isLoading, isError } = useRunningMatches(1, 100);
 
   return (
     <div>
