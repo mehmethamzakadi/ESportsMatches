@@ -124,9 +124,33 @@ class ReminderService {
     }
   }
 
+  // Bildirim desteğini kontrol et
+  public checkNotificationSupport(): { supported: boolean; reason?: string } {
+    // Web Notifications API desteği kontrolü
+    if (!('Notification' in window)) {
+      return { supported: false, reason: 'Bu tarayıcı Web Notifications API\'sini desteklemiyor.' };
+    }
+    
+    // iOS Safari kontrolü (iOS Safari'de Notification tanımlı olabilir ama çalışmaz)
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+    if (isIOS) {
+      return { supported: false, reason: 'iOS cihazlarda web bildirimleri desteklenmemektedir.' };
+    }
+    
+    // Service Worker desteği kontrolü
+    if (!('serviceWorker' in navigator)) {
+      return { supported: false, reason: 'Bu tarayıcı Service Worker\'ları desteklemiyor.' };
+    }
+    
+    return { supported: true };
+  }
+
   // Bildirim izni iste
   public async requestNotificationPermission(): Promise<string> {
-    if (!('Notification' in window)) {
+    // Önce bildirim desteğini kontrol et
+    const supportCheck = this.checkNotificationSupport();
+    if (!supportCheck.supported) {
+      console.warn('Notification support check failed:', supportCheck.reason);
       return 'denied';
     }
     
