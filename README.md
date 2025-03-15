@@ -1,53 +1,53 @@
 # ESportsMatches
 
-A modern web application for tracking and displaying esports matches, tournaments, and live streams.
+E-spor maçlarını, turnuvalarını ve canlı yayınlarını takip etmek ve görüntülemek için modern bir web uygulaması.
 
-## Features
+## Özellikler
 
-- Display upcoming, live, and completed esports matches
-- Show match details including teams, scores, and results
-- Live stream integration with Twitch
-- Responsive design for desktop and mobile devices
-- Dark mode support
+- Yaklaşan, canlı ve tamamlanmış e-spor maçlarını görüntüleme
+- Takımlar, skorlar ve sonuçlar dahil olmak üzere maç detaylarını gösterme
+- Twitch ile canlı yayın entegrasyonu
+- Masaüstü ve mobil cihazlar için duyarlı tasarım
+- Karanlık mod desteği
 
-## Technologies Used
+## Kullanılan Teknolojiler
 
 - Next.js
 - React
 - TypeScript
 - Tailwind CSS
 
-## Getting Started
+## Başlangıç
 
-### Prerequisites
+### Gereksinimler
 
-- Node.js (v14 or later)
-- npm or yarn
+- Node.js (v14 veya daha yeni)
+- npm veya yarn
 
-### Installation
+### Kurulum
 
-1. Clone the repository
+1. Depoyu klonlayın
    ```bash
    git clone https://github.com/YOUR_USERNAME/ESportsMatches.git
    cd ESportsMatches
    ```
 
-2. Install dependencies
+2. Bağımlılıkları yükleyin
    ```bash
    npm install
-   # or
+   # veya
    yarn install
    ```
 
-3. Run the development server
+3. Geliştirme sunucusunu çalıştırın
    ```bash
    npm run dev
-   # or
+   # veya
    yarn dev
    ```
 
-4. Open [http://localhost:3000](http://localhost:3000) in your browser to see the application
+4. Uygulamayı görmek için tarayıcınızda [http://localhost:3000](http://localhost:3000) adresini açın
 
-## License
+## Lisans
 
 MIT 
