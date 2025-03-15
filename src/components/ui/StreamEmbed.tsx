@@ -34,7 +34,7 @@ const StreamEmbed: React.FC<StreamEmbedProps> = ({ streamUrl, teamNames }) => {
   }
 
   return (
-    <div className="mt-6 flex flex-col items-center">
+    <div className="flex flex-col items-center">
       {showEmbed ? (
         <div className="w-full mt-3 relative pt-[56.25%]">
           <iframe 
@@ -53,21 +53,26 @@ const StreamEmbed: React.FC<StreamEmbedProps> = ({ streamUrl, teamNames }) => {
           </button>
         </div>
       ) : (
-        <div className="flex flex-col items-center">
+        <div className="flex flex-row items-center justify-center gap-3 w-full">
           <a 
             href={streamUrl} 
             target="_blank" 
             rel="noopener noreferrer"
-            className="btn btn-primary inline-flex items-center justify-center px-5 py-2.5 rounded-md bg-red-600 hover:bg-red-700 text-white font-medium transition-colors mb-3"
+            className="flex-1 flex items-center justify-center px-4 py-2 rounded-md bg-red-600 hover:bg-red-700 text-white text-sm font-medium transition-all shadow-sm hover:shadow"
           >
-            <span className="mr-2 w-2 h-2 bg-white rounded-full animate-pulse"></span>
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
             Canlı İzle
           </a>
           <button 
             onClick={() => setShowEmbed(true)}
-            className="text-base text-blue-600 hover:underline flex items-center"
+            className="flex-1 flex items-center justify-center px-4 py-2 rounded-md bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 text-sm font-medium transition-all shadow-sm hover:shadow"
           >
-            <span className="mr-2">📺</span>
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+            </svg>
             Gömülü İzle
           </button>
         </div>

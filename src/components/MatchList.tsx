@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import MatchCard from './MatchCard';
 import SearchBar from './SearchBar';
-import Pagination from './ui/Pagination';
 import MatchListSkeleton from './ui/MatchListSkeleton';
 import ErrorMessage from './ui/ErrorMessage';
 import EmptyState from './ui/EmptyState';
@@ -15,11 +14,29 @@ interface MatchListProps {
 }
 
 const MatchList: React.FC<MatchListProps> = ({ matches, isLoading, isError, title }) => {
-  const [currentPage, setCurrentPage] = useState(1);
-  const [paginatedMatches, setPaginatedMatches] = useState<Match[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredMatches, setFilteredMatches] = useState<Match[]>([]);
-  const matchesPerPage = 10;
+  const [displayedMatches, setDisplayedMatches] = useState<Match[]>([]);
+  const [hasMore, setHasMore] = useState(true);
+  
+  // Başlangıçta gösterilecek maç sayısı
+  const initialMatchCount = 15;
+  // Her scroll'da eklenecek maç sayısı
+  const matchesPerLoad = 10;
+  
+  const observer = useRef<IntersectionObserver | null>(null);
+  const lastMatchElementRef = useCallback((node: HTMLDivElement | null) => {
+    if (isLoading) return;
+    if (observer.current) observer.current.disconnect();
+    
+    observer.current = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting && hasMore) {
+        loadMoreMatches();
+      }
+    }, { threshold: 0.5 });
+    
+    if (node) observer.current.observe(node);
+  }, [isLoading, hasMore]);
 
   // Arama terimine göre maçları filtrele
   useEffect(() => {
@@ -36,25 +53,29 @@ const MatchList: React.FC<MatchListProps> = ({ matches, isLoading, isError, titl
       });
       setFilteredMatches(filtered);
     }
-    // Arama yapıldığında ilk sayfaya dön
-    setCurrentPage(1);
+    
+    // Arama yapıldığında görüntülenen maçları sıfırla
+    setDisplayedMatches([]);
+    setHasMore(true);
   }, [searchTerm, matches]);
 
-  // Sayfalama için toplam sayfa sayısını hesapla
-  const totalPages = Math.ceil(filteredMatches.length / matchesPerPage);
-
-  // Sayfa değiştiğinde veya filtrelenmiş maçlar güncellendiğinde, gösterilecek maçları güncelle
+  // Filtrelenmiş maçlar değiştiğinde ilk grup maçı göster
   useEffect(() => {
-    const startIndex = (currentPage - 1) * matchesPerPage;
-    const endIndex = startIndex + matchesPerPage;
-    setPaginatedMatches(filteredMatches.slice(startIndex, endIndex));
-  }, [filteredMatches, currentPage]);
+    setDisplayedMatches(filteredMatches.slice(0, initialMatchCount));
+    setHasMore(filteredMatches.length > initialMatchCount);
+  }, [filteredMatches]);
 
-  // Sayfa değiştirme fonksiyonu
-  const changePage = (page: number) => {
-    if (page < 1 || page > totalPages) return;
-    setCurrentPage(page);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+  // Daha fazla maç yükleme fonksiyonu
+  const loadMoreMatches = () => {
+    const currentSize = displayedMatches.length;
+    const nextMatches = filteredMatches.slice(currentSize, currentSize + matchesPerLoad);
+    
+    if (nextMatches.length > 0) {
+      setDisplayedMatches(prev => [...prev, ...nextMatches]);
+      setHasMore(currentSize + nextMatches.length < filteredMatches.length);
+    } else {
+      setHasMore(false);
+    }
   };
 
   if (isLoading) {
@@ -70,11 +91,11 @@ const MatchList: React.FC<MatchListProps> = ({ matches, isLoading, isError, titl
   }
 
   return (
-    <div className="py-8 container mx-auto px-4">
+    <div className="py-6 container mx-auto px-4">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">{title}</h2>
         <div className="text-sm text-gray-500 dark:text-gray-400">
-          Toplam {filteredMatches.length} maç ({currentPage}/{totalPages} sayfa)
+          Toplam {filteredMatches.length} maç
         </div>
       </div>
       
@@ -91,22 +112,38 @@ const MatchList: React.FC<MatchListProps> = ({ matches, isLoading, isError, titl
         />
       ) : (
         <>
-          <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-            {paginatedMatches.map((match) => (
-              <div key={match.id} className="h-full flex">
-                <MatchCard 
-                  match={match} 
-                  showDates={true} 
-                />
-              </div>
-            ))}
+          <div className="space-y-3 mt-4">
+            {displayedMatches.map((match, index) => {
+              // Son elemana referans ekle
+              if (displayedMatches.length === index + 1) {
+                return (
+                  <div 
+                    ref={lastMatchElementRef}
+                    key={`${match.id}-${index}`}
+                  >
+                    <MatchCard 
+                      match={match} 
+                      showDates={true} 
+                    />
+                  </div>
+                );
+              } else {
+                return (
+                  <div key={`${match.id}-${index}`}>
+                    <MatchCard 
+                      match={match} 
+                      showDates={true} 
+                    />
+                  </div>
+                );
+              }
+            })}
           </div>
           
-          <Pagination 
-            currentPage={currentPage} 
-            totalPages={totalPages} 
-            onPageChange={changePage} 
-          />
+          {isLoading && <p className="text-center mt-4">Yükleniyor...</p>}
+          {!hasMore && displayedMatches.length > 0 && (
+            <p className="text-center mt-4 text-gray-500">Tüm maçlar yüklendi</p>
+          )}
         </>
       )}
     </div>
