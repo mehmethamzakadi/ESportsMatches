@@ -26,7 +26,7 @@ export default function RootLayout({
             </main>
             <footer className="py-6 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 transition-colors duration-200">
               <div className="container mx-auto px-4 text-center text-gray-500 dark:text-gray-400 text-sm">
-                <p>© {new Date().getFullYear()} CS:GO E-Sports Matches. All rights reserved.</p>
+                <p>© {new Date().getFullYear()} CS2 E-Sports Matches. All rights reserved.</p>
               </div>
             </footer>
             <ScrollToTop />
