@@ -28,7 +28,7 @@ E-spor maçlarını, turnuvalarını ve canlı yayınlarını takip etmek ve gö
 
 1. Depoyu klonlayın
    ```bash
-   git clone https://github.com/YOUR_USERNAME/ESportsMatches.git
+   git clone https://github.com/mehmethamzakadi/ESportsMatches.git
    cd ESportsMatches
    ```
 
