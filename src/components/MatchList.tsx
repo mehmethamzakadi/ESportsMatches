@@ -5,6 +5,7 @@ import MatchListSkeleton from './ui/MatchListSkeleton';
 import ErrorMessage from './ui/ErrorMessage';
 import EmptyState from './ui/EmptyState';
 import { Match } from '@/types/match';
+import { eventEmitter } from '@/utils/eventEmitter';
 
 interface MatchListProps {
   matches: Match[];
@@ -18,6 +19,7 @@ const MatchList: React.FC<MatchListProps> = ({ matches, isLoading, isError, titl
   const [filteredMatches, setFilteredMatches] = useState<Match[]>([]);
   const [displayedMatches, setDisplayedMatches] = useState<Match[]>([]);
   const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   
   // Başlangıçta gösterilecek maç sayısı
   const initialMatchCount = 15;
@@ -25,18 +27,73 @@ const MatchList: React.FC<MatchListProps> = ({ matches, isLoading, isError, titl
   const matchesPerLoad = 10;
   
   const observer = useRef<IntersectionObserver | null>(null);
+  
+  // Infinite scroll'u sıfırlama fonksiyonu
+  const resetInfiniteScroll = useCallback(() => {
+    // Observer'ı temizle
+    if (observer.current) {
+      observer.current.disconnect();
+    }
+    
+    // İlk maçları göster
+    const initialMatches = filteredMatches.slice(0, initialMatchCount);
+    setDisplayedMatches(initialMatches);
+    
+    // hasMore'u güncelle
+    const newHasMore = filteredMatches.length > initialMatchCount;
+    setHasMore(newHasMore);
+    setLoadingMore(false);
+  }, [filteredMatches, initialMatchCount]);
+  
+  // Daha fazla maç yükleme fonksiyonu
+  const loadMoreMatches = useCallback(() => {
+    if (!hasMore || loadingMore) return;
+    
+    setLoadingMore(true);
+    
+    // Asenkron işlemi simüle etmek için setTimeout kullanıyoruz
+    setTimeout(() => {
+      const currentSize = displayedMatches.length;
+      
+      // Eğer tüm maçlar zaten yüklendiyse, hasMore'u false yap ve çık
+      if (currentSize >= filteredMatches.length) {
+        setHasMore(false);
+        setLoadingMore(false);
+        //console.log('Tüm maçlar zaten yüklenmiş, daha fazla yükleme yapılmayacak');
+        return;
+      }
+      
+      const nextMatches = filteredMatches.slice(currentSize, currentSize + matchesPerLoad);
+      
+      if (nextMatches.length > 0) {
+        setDisplayedMatches(prev => [...prev, ...nextMatches]);
+        // Eğer yüklenen son maç, filtrelenmiş maçların sonuncusuysa hasMore'u false yap
+        const newHasMore = currentSize + nextMatches.length < filteredMatches.length;
+        setHasMore(newHasMore);
+        //console.log(`Yeni maçlar yüklendi. Toplam: ${currentSize + nextMatches.length}/${filteredMatches.length}, Daha fazla var mı: ${newHasMore}`);
+      } else {
+        setHasMore(false);
+        //console.log('Yüklenecek başka maç kalmadı');
+      }
+      
+      setLoadingMore(false);
+    }, 300);
+  }, [displayedMatches, filteredMatches, hasMore, loadingMore]);
+  
   const lastMatchElementRef = useCallback((node: HTMLDivElement | null) => {
-    if (isLoading) return;
+    if (isLoading || loadingMore || !hasMore) return;
+    
     if (observer.current) observer.current.disconnect();
     
     observer.current = new IntersectionObserver(entries => {
       if (entries[0].isIntersecting && hasMore) {
+        //console.log('Son eleman görünür oldu, daha fazla maç yükleniyor...');
         loadMoreMatches();
       }
-    }, { threshold: 0.5 });
+    }, { threshold: 0.1, rootMargin: '100px' });
     
     if (node) observer.current.observe(node);
-  }, [isLoading, hasMore]);
+  }, [isLoading, hasMore, loadingMore, loadMoreMatches]);
 
   // Arama terimine göre maçları filtrele
   useEffect(() => {
@@ -57,26 +114,36 @@ const MatchList: React.FC<MatchListProps> = ({ matches, isLoading, isError, titl
     // Arama yapıldığında görüntülenen maçları sıfırla
     setDisplayedMatches([]);
     setHasMore(true);
+    setLoadingMore(false);
   }, [searchTerm, matches]);
 
   // Filtrelenmiş maçlar değiştiğinde ilk grup maçı göster
   useEffect(() => {
-    setDisplayedMatches(filteredMatches.slice(0, initialMatchCount));
-    setHasMore(filteredMatches.length > initialMatchCount);
+    const initialMatches = filteredMatches.slice(0, initialMatchCount);
+    setDisplayedMatches(initialMatches);
+    
+    // Eğer filtrelenmiş maç sayısı başlangıçta gösterilecek maç sayısından azsa veya eşitse
+    // hasMore'u false yap
+    const newHasMore = filteredMatches.length > initialMatchCount;
+    setHasMore(newHasMore);
+    //console.log(`İlk maçlar yüklendi. Toplam: ${initialMatches.length}/${filteredMatches.length}, Daha fazla var mı: ${newHasMore}`);
   }, [filteredMatches]);
 
-  // Daha fazla maç yükleme fonksiyonu
-  const loadMoreMatches = () => {
-    const currentSize = displayedMatches.length;
-    const nextMatches = filteredMatches.slice(currentSize, currentSize + matchesPerLoad);
+  // resetInfiniteScroll eventini dinle
+  useEffect(() => {
+    const cleanup = eventEmitter.on('resetInfiniteScroll', resetInfiniteScroll);
     
-    if (nextMatches.length > 0) {
-      setDisplayedMatches(prev => [...prev, ...nextMatches]);
-      setHasMore(currentSize + nextMatches.length < filteredMatches.length);
-    } else {
-      setHasMore(false);
-    }
-  };
+    return cleanup;
+  }, [resetInfiniteScroll]);
+
+  // Component unmount olduğunda observer'ı temizle
+  useEffect(() => {
+    return () => {
+      if (observer.current) {
+        observer.current.disconnect();
+      }
+    };
+  }, []);
 
   if (isLoading) {
     return <MatchListSkeleton title={title} count={4} />;
@@ -112,13 +179,13 @@ const MatchList: React.FC<MatchListProps> = ({ matches, isLoading, isError, titl
         />
       ) : (
         <>
-          <div className="space-y-3 mt-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 mt-4">
             {displayedMatches.map((match, index) => {
               // Son elemana referans ekle
               if (displayedMatches.length === index + 1) {
                 return (
                   <div 
-                    ref={lastMatchElementRef}
+                    ref={hasMore ? lastMatchElementRef : null}
                     key={`${match.id}-${index}`}
                   >
                     <MatchCard 
@@ -140,7 +207,10 @@ const MatchList: React.FC<MatchListProps> = ({ matches, isLoading, isError, titl
             })}
           </div>
           
-          {isLoading && <p className="text-center mt-4">Yükleniyor...</p>}
+          {loadingMore && (
+            <p className="text-center mt-4 text-gray-500">Daha fazla maç yükleniyor...</p>
+          )}
+          
           {!hasMore && displayedMatches.length > 0 && (
             <p className="text-center mt-4 text-gray-500">Tüm maçlar yüklendi</p>
           )}

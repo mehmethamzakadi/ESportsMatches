@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { ArrowUp } from 'lucide-react';
+import { eventEmitter } from '@/utils/eventEmitter';
 
 export default function ScrollToTop() {
   const [isVisible, setIsVisible] = useState(false);
@@ -21,12 +22,15 @@ export default function ScrollToTop() {
     return () => window.removeEventListener('scroll', toggleVisibility);
   }, []);
 
-  // Sayfanın en üstüne kaydır
+  // Sayfanın en üstüne kaydır ve infinite scroll'u sıfırla
   const scrollToTop = () => {
     window.scrollTo({
       top: 0,
       behavior: 'smooth'
     });
+    
+    // Infinite scroll'u sıfırlamak için event yayınla
+    eventEmitter.emit('resetInfiniteScroll');
   };
 
   return (
