@@ -192,7 +192,7 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, showDates = true }) => {
       {showStreamEmbed && isRunning && match.streams_list && match.streams_list.length > 0 && (
         <div className="border-t border-gray-100 dark:border-gray-700 p-4">
           <StreamEmbed 
-            streamUrl={match.streams_list[0].raw_url} 
+            streamUrl={match.streams_list[match.streams_list.length -1].raw_url} 
             teamNames={{
               team1: match.opponents[0]?.opponent.name || 'Team 1',
               team2: match.opponents[1]?.opponent.name || 'Team 2'
