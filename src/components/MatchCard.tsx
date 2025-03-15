@@ -1,9 +1,13 @@
+"use client";
+
 import React, { useState } from 'react';
 import { Match } from '@/types/match';
 import StatusBadge from './ui/StatusBadge';
 import MatchDate from './ui/MatchDate';
 import TeamLogo from './ui/TeamLogo';
 import StreamEmbed from './ui/StreamEmbed';
+// @ts-ignore
+import ReminderModal from './ui/ReminderModal';
 
 interface MatchCardProps {
   match: Match;
@@ -12,6 +16,7 @@ interface MatchCardProps {
 
 const MatchCard: React.FC<MatchCardProps> = ({ match, showDates = true }) => {
   const [showStreamEmbed, setShowStreamEmbed] = useState(false);
+  const [showReminderModal, setShowReminderModal] = useState(false);
 
   // Kazanan takımı belirle
   const getWinnerTeamId = () => {
@@ -37,6 +42,7 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, showDates = true }) => {
   const isCanceled = match.status === 'canceled';
   const isRunning = match.status === 'running';
   const isFinished = match.status === 'finished';
+  const isUpcoming = match.status === 'not_started';
 
   // Skor gösterimi için yardımcı fonksiyon
   const renderScore = (teamIndex: number) => {
@@ -151,9 +157,10 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, showDates = true }) => {
           </div>
         )}
         
-        {/* Canlı İzle Butonu */}
-        {match.status === 'running' && match.streams_list && match.streams_list.length > 0 && (
-          <div className="flex justify-center mt-3">
+        {/* Aksiyon Butonları */}
+        <div className="flex justify-center mt-3 space-x-2">
+          {/* Canlı İzle Butonu */}
+          {isRunning && match.streams_list && match.streams_list.length > 0 && (
             <button 
               onClick={() => setShowStreamEmbed(!showStreamEmbed)}
               className="flex items-center justify-center px-4 py-1.5 rounded-md bg-red-600 hover:bg-red-700 text-white text-xs font-medium transition-all shadow-sm hover:shadow"
@@ -164,12 +171,25 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, showDates = true }) => {
               </svg>
               {showStreamEmbed ? 'YAYIN PANELINI KAPAT' : 'CANLI İZLE'}
             </button>
-          </div>
-        )}
+          )}
+          
+          {/* Hatırlatıcı Butonu */}
+          {isUpcoming && (
+            <button 
+              onClick={() => setShowReminderModal(true)}
+              className="flex items-center justify-center px-4 py-1.5 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium transition-all shadow-sm hover:shadow"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              HATIRLATICI EKLE
+            </button>
+          )}
+        </div>
       </div>
       
       {/* Stream Embed (Açılır Kapanır Panel) */}
-      {showStreamEmbed && match.status === 'running' && match.streams_list && match.streams_list.length > 0 && (
+      {showStreamEmbed && isRunning && match.streams_list && match.streams_list.length > 0 && (
         <div className="border-t border-gray-100 dark:border-gray-700 p-4">
           <StreamEmbed 
             streamUrl={match.streams_list[0].raw_url} 
@@ -179,6 +199,14 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, showDates = true }) => {
             }}
           />
         </div>
+      )}
+      
+      {/* Hatırlatıcı Modal */}
+      {showReminderModal && (
+        <ReminderModal
+          match={match}
+          onClose={() => setShowReminderModal(false)}
+        />
       )}
     </div>
   );

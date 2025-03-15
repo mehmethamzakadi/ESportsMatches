@@ -1,0 +1,68 @@
+"use client";
+
+import React, { useEffect } from 'react';
+import ReminderService from '@/services/ReminderService';
+
+interface ReminderProviderProps {
+  children: React.ReactNode;
+}
+
+const ReminderProvider: React.FC<ReminderProviderProps> = ({ children }) => {
+  useEffect(() => {
+    // Client tarafında çalıştığından emin ol
+    if (typeof window !== 'undefined') {
+      // ReminderService'i başlat
+      const reminderService = ReminderService.getInstance();
+      
+      // Sayfa yüklendiğinde hatırlatıcıları kontrol et
+      const checkReminders = () => {
+        const reminders = reminderService.getReminders();
+        const now = new Date();
+        
+        reminders.forEach((reminder) => {
+          if (!reminder.matchDate || !reminder.reminderTime) return;
+          
+          const matchDate = new Date(reminder.matchDate);
+          const reminderDate = new Date(matchDate.getTime() - reminder.reminderTime * 60000);
+          
+          // Şu an hatırlatma zamanı geldiyse ve daha önce bildirim gönderilmediyse
+          if (now >= reminderDate && now < matchDate && !reminder.notified) {
+            // Bildirim izni kontrolü
+            if (Notification.permission === 'granted') {
+              // Bildirim gönder
+              const notification = new Notification('Maç Hatırlatıcısı', {
+                body: reminder.message || 'Maç başlamak üzere!',
+                icon: '/logo.png',
+              });
+              
+              // Hatırlatıcıyı bildirildi olarak işaretle
+              reminder.notified = true;
+              
+              // Güncellenmiş hatırlatıcıları kaydet
+              const updatedReminders = reminderService.getReminders().map(r => 
+                r.id === reminder.id ? { ...r, notified: true } : r
+              );
+              
+              localStorage.setItem('matchReminders', JSON.stringify(updatedReminders));
+            }
+          }
+        });
+      };
+      
+      // Sayfa yüklendiğinde kontrol et
+      checkReminders();
+      
+      // Periyodik kontrol için interval oluştur (her dakika)
+      const intervalId = setInterval(checkReminders, 60000);
+      
+      // Temizleme fonksiyonu
+      return () => {
+        clearInterval(intervalId);
+      };
+    }
+  }, []);
+
+  return <>{children}</>;
+};
+
+export default ReminderProvider; 
