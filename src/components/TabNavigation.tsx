@@ -11,14 +11,14 @@ interface TabItem {
 
 const tabs: TabItem[] = [
   {
-    label: 'Gelecek Maçlar',
+    label: 'Aktif Maçlar',
     path: '/',
-    icon: '📅',
+    icon: '🔴',
   },
   {
-    label: 'Aktif Maçlar',
-    path: '/running',
-    icon: '🔴',
+    label: 'Gelecek Maçlar',
+    path: '/upcoming',
+    icon: '📅',
   },
   {
     label: 'Geçmiş Maçlar',

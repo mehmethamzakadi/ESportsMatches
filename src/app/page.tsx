@@ -3,10 +3,10 @@
 import React from 'react';
 import TabNavigation from '@/components/TabNavigation';
 import MatchList from '@/components/MatchList';
-import { useUpcomingMatches } from '@/lib/hooks';
+import { useRunningMatches } from '@/lib/hooks';
 
 export default function Home() {
-  const { matches, isLoading, isError } = useUpcomingMatches(1, 100);
+  const { matches, isLoading, isError } = useRunningMatches(1, 100);
 
   return (
     <div>
@@ -25,7 +25,7 @@ export default function Home() {
         matches={matches} 
         isLoading={isLoading} 
         isError={isError} 
-        title="Gelecek Maçlar" 
+        title="Aktif Maçlar" 
       />
     </div>
   );
