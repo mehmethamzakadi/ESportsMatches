@@ -1,6 +1,7 @@
 import useSWR from 'swr';
 import { getUpcomingMatches, getRunningMatches, getPastMatches } from './api';
 import { Match } from '@/types/match';
+import { useState, useEffect } from 'react';
 
 // SWR fetcher fonksiyonu
 const fetcher = (url: string) => fetch(url).then((res) => res.json());

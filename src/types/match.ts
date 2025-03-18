@@ -56,5 +56,4 @@ export interface Match {
     raw_url: string;
     stream_url: string;
   }[];
-  live_url: string | null;
 } 

@@ -25,6 +25,11 @@ const tabs: TabItem[] = [
     path: '/past',
     icon: '📚',
   },
+  {
+    label: 'Favorilerim',
+    path: '/favorites',
+    icon: '⭐',
+  },
 ];
 
 const TabNavigation: React.FC = () => {
@@ -32,7 +37,7 @@ const TabNavigation: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm mb-8 overflow-hidden transition-colors duration-200">
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm mb-8 overflow-hidden transition-colors duration-200 border border-gray-100 dark:border-gray-700">
       <div className="container mx-auto relative">
         {/* Desktop horizontal tabs */}
         <div className="hidden md:block">
@@ -44,10 +49,10 @@ const TabNavigation: React.FC = () => {
                   <Link
                     key={tab.path}
                     href={tab.path}
-                    className={`flex items-center px-6 py-4 text-sm font-medium whitespace-nowrap transition-colors ${
+                    className={`flex items-center px-6 py-4 text-sm font-medium whitespace-nowrap transition-colors duration-200 ${
                       isActive
-                        ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border-b-2 border-blue-500 dark:border-blue-400'
-                        : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100'
+                        ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 border-b-2 border-primary-500 dark:border-primary-400'
+                        : 'text-secondary-600 dark:text-secondary-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100'
                     }`}
                   >
                     <span className="mr-2 text-lg">{tab.icon}</span>
@@ -66,7 +71,7 @@ const TabNavigation: React.FC = () => {
         <div className="md:hidden">
           <div className="flex items-center justify-between px-4 py-3">
             {/* Show the active tab label */}
-            <div className="text-lg font-medium text-gray-800 dark:text-gray-200">
+            <div className="text-lg font-medium text-gray-900 dark:text-gray-100">
               {tabs.find(tab => tab.path === pathname)?.label || tabs[0].label}
             </div>
             
@@ -75,7 +80,7 @@ const TabNavigation: React.FC = () => {
               <ThemeToggle />
               <button 
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className="p-2 rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none"
+                className="p-2 rounded-md text-secondary-600 dark:text-secondary-300 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 focus:ring-opacity-50 transition-colors duration-200"
                 aria-label="Toggle menu"
               >
                 {isMenuOpen ? (
@@ -101,10 +106,10 @@ const TabNavigation: React.FC = () => {
                     key={tab.path}
                     href={tab.path}
                     onClick={() => setIsMenuOpen(false)}
-                    className={`flex items-center px-6 py-4 text-sm font-medium border-b border-gray-100 dark:border-gray-700 ${
+                    className={`flex items-center px-6 py-4 text-sm font-medium border-b border-gray-100 dark:border-gray-700 transition-colors duration-200 ${
                       isActive
-                        ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
-                        : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100'
+                        ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
+                        : 'text-secondary-600 dark:text-secondary-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100'
                     }`}
                   >
                     <span className="mr-2 text-lg">{tab.icon}</span>

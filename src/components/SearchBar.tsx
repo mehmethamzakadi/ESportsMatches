@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 interface SearchBarProps {
   searchTerm: string;
@@ -11,12 +11,14 @@ const SearchBar: React.FC<SearchBarProps> = ({
   onSearchChange, 
   placeholder = "Takım adına göre ara..." 
 }) => {
+  const [isFocused, setIsFocused] = useState(false);
+
   return (
-    <div className="w-full mb-6">
-      <div className="relative">
-        <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+    <div className="w-full mb-4 sm:mb-6">
+      <div className={`relative rounded-lg shadow-sm ${isFocused ? 'ring-2 ring-primary-500 dark:ring-primary-400' : ''}`}>
+        <div className="absolute inset-y-0 left-0 flex items-center pl-2 sm:pl-3 pointer-events-none">
           <svg 
-            className="w-4 h-4 text-gray-500 dark:text-gray-400" 
+            className="w-4 h-4 text-secondary-500 dark:text-secondary-400" 
             aria-hidden="true" 
             xmlns="http://www.w3.org/2000/svg" 
             fill="none" 
@@ -32,20 +34,24 @@ const SearchBar: React.FC<SearchBarProps> = ({
           </svg>
         </div>
         <input
-          type="text"
+          type="search"
           value={searchTerm}
           onChange={(e) => onSearchChange(e.target.value)}
-          className="block w-full p-3 pl-10 text-sm text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 transition-colors duration-200"
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => setIsFocused(false)}
+          className="block w-full p-2 sm:p-3 pl-8 sm:pl-10 text-sm text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 focus:outline-none transition-colors duration-200"
           placeholder={placeholder}
+          aria-label="Arama"
         />
         {searchTerm && (
           <button
             type="button"
-            className="absolute inset-y-0 right-0 flex items-center pr-3"
+            className="absolute inset-y-0 right-0 flex items-center pr-2 sm:pr-3"
             onClick={() => onSearchChange('')}
+            aria-label="Aramayı temizle"
           >
             <svg 
-              className="w-4 h-4 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300" 
+              className="w-4 h-4 text-secondary-500 dark:text-secondary-400 hover:text-gray-700 dark:hover:text-gray-300" 
               aria-hidden="true" 
               xmlns="http://www.w3.org/2000/svg" 
               fill="none" 

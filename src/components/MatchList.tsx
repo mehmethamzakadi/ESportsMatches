@@ -22,9 +22,9 @@ const MatchList: React.FC<MatchListProps> = ({ matches, isLoading, isError, titl
   const [loadingMore, setLoadingMore] = useState(false);
   
   // Başlangıçta gösterilecek maç sayısı
-  const initialMatchCount = 15;
+  const initialMatchCount = 10; // Mobil için daha az maç göster
   // Her scroll'da eklenecek maç sayısı
-  const matchesPerLoad = 10;
+  const matchesPerLoad = 5; // Mobil için daha az maç yükle
   
   const observer = useRef<IntersectionObserver | null>(null);
   
@@ -59,7 +59,6 @@ const MatchList: React.FC<MatchListProps> = ({ matches, isLoading, isError, titl
       if (currentSize >= filteredMatches.length) {
         setHasMore(false);
         setLoadingMore(false);
-        //console.log('Tüm maçlar zaten yüklenmiş, daha fazla yükleme yapılmayacak');
         return;
       }
       
@@ -70,10 +69,8 @@ const MatchList: React.FC<MatchListProps> = ({ matches, isLoading, isError, titl
         // Eğer yüklenen son maç, filtrelenmiş maçların sonuncusuysa hasMore'u false yap
         const newHasMore = currentSize + nextMatches.length < filteredMatches.length;
         setHasMore(newHasMore);
-        //console.log(`Yeni maçlar yüklendi. Toplam: ${currentSize + nextMatches.length}/${filteredMatches.length}, Daha fazla var mı: ${newHasMore}`);
       } else {
         setHasMore(false);
-        //console.log('Yüklenecek başka maç kalmadı');
       }
       
       setLoadingMore(false);
@@ -87,7 +84,6 @@ const MatchList: React.FC<MatchListProps> = ({ matches, isLoading, isError, titl
     
     observer.current = new IntersectionObserver(entries => {
       if (entries[0].isIntersecting && hasMore) {
-        //console.log('Son eleman görünür oldu, daha fazla maç yükleniyor...');
         loadMoreMatches();
       }
     }, { threshold: 0.1, rootMargin: '100px' });
@@ -126,7 +122,6 @@ const MatchList: React.FC<MatchListProps> = ({ matches, isLoading, isError, titl
     // hasMore'u false yap
     const newHasMore = filteredMatches.length > initialMatchCount;
     setHasMore(newHasMore);
-    //console.log(`İlk maçlar yüklendi. Toplam: ${initialMatches.length}/${filteredMatches.length}, Daha fazla var mı: ${newHasMore}`);
   }, [filteredMatches]);
 
   // resetInfiniteScroll eventini dinle
@@ -158,10 +153,10 @@ const MatchList: React.FC<MatchListProps> = ({ matches, isLoading, isError, titl
   }
 
   return (
-    <div className="py-6 container mx-auto px-4">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">{title}</h2>
-        <div className="text-sm text-gray-500 dark:text-gray-400">
+    <div className="py-4 sm:py-6 container mx-auto px-2 sm:px-4">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 gap-2">
+        <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">{title}</h2>
+        <div className="text-sm text-secondary-500 dark:text-secondary-400">
           Toplam {filteredMatches.length} maç
         </div>
       </div>
@@ -179,7 +174,7 @@ const MatchList: React.FC<MatchListProps> = ({ matches, isLoading, isError, titl
         />
       ) : (
         <>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 mt-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3 mt-4">
             {displayedMatches.map((match, index) => {
               // Son elemana referans ekle
               if (displayedMatches.length === index + 1) {
@@ -208,11 +203,11 @@ const MatchList: React.FC<MatchListProps> = ({ matches, isLoading, isError, titl
           </div>
           
           {loadingMore && (
-            <p className="text-center mt-4 text-gray-500">Daha fazla maç yükleniyor...</p>
+            <p className="text-center mt-4 text-secondary-500 dark:text-secondary-400 text-sm">Daha fazla maç yükleniyor...</p>
           )}
           
           {!hasMore && displayedMatches.length > 0 && (
-            <p className="text-center mt-4 text-gray-500">Tüm maçlar yüklendi</p>
+            <p className="text-center mt-4 text-secondary-500 dark:text-secondary-400 text-sm">Tüm maçlar yüklendi</p>
           )}
         </>
       )}

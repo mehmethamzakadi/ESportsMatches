@@ -2,6 +2,7 @@
 
 import React, { useEffect } from 'react';
 import ReminderService from '@/services/ReminderService';
+import NotificationService from '@/services/NotificationService';
 
 interface ReminderProviderProps {
   children: React.ReactNode;
@@ -11,8 +12,9 @@ const ReminderProvider: React.FC<ReminderProviderProps> = ({ children }) => {
   useEffect(() => {
     // Client tarafında çalıştığından emin ol
     if (typeof window !== 'undefined') {
-      // ReminderService'i başlat
+      // Servisleri başlat
       const reminderService = ReminderService.getInstance();
+      const notificationService = NotificationService.getInstance();
       
       // Sayfa yüklendiğinde hatırlatıcıları kontrol et
       const checkReminders = () => {
@@ -28,22 +30,18 @@ const ReminderProvider: React.FC<ReminderProviderProps> = ({ children }) => {
           // Şu an hatırlatma zamanı geldiyse ve daha önce bildirim gönderilmediyse
           if (now >= reminderDate && now < matchDate && !reminder.notified) {
             // Bildirim izni kontrolü
-            if (Notification.permission === 'granted') {
+            if (notificationService.getNotificationPermission() === 'granted') {
               // Bildirim gönder
-              const notification = new Notification('Maç Hatırlatıcısı', {
-                body: reminder.message || 'Maç başlamak üzere!',
-                icon: '/logo.png',
-              });
-              
-              // Hatırlatıcıyı bildirildi olarak işaretle
-              reminder.notified = true;
-              
-              // Güncellenmiş hatırlatıcıları kaydet
-              const updatedReminders = reminderService.getReminders().map(r => 
-                r.id === reminder.id ? { ...r, notified: true } : r
+              notificationService.sendNotification(
+                'Maç Hatırlatıcısı',
+                {
+                  body: reminder.message || 'Maç başlamak üzere!',
+                  icon: '/logo.png',
+                }
               );
               
-              localStorage.setItem('matchReminders', JSON.stringify(updatedReminders));
+              // Hatırlatıcıyı bildirildi olarak işaretle
+              reminderService.markReminderAsNotified(reminder.id);
             }
           }
         });
