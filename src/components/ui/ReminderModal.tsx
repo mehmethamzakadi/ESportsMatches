@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Match } from '@/types/match';
-import ReminderService from '@/services/ReminderService';
+import ClientReminderService from '@/services/ClientReminderService';
 import NotificationService from '@/services/NotificationService';
 import CalendarService from '@/services/CalendarService';
 import { createPortal } from 'react-dom';
@@ -25,7 +25,7 @@ const ReminderModal: React.FC<ReminderModalProps> = ({ match, onClose }) => {
   const [mounted, setMounted] = useState(false);
 
   // Servis instansları
-  const reminderService = ReminderService.getInstance();
+  const reminderService = ClientReminderService.getInstance();
   const notificationService = NotificationService.getInstance();
   const calendarService = CalendarService.getInstance();
 
@@ -232,8 +232,8 @@ const ReminderModal: React.FC<ReminderModalProps> = ({ match, onClose }) => {
       } else if (selectedOption === 'calendar') {
         createCalendarFile();
       } else if (selectedOption === 'email') {
-        // E-posta bildirimi gönder
-        const emailResult = await reminderService.sendEmailReminder(
+        // Google Mail API ile e-posta gönder
+        const emailResult = await reminderService.sendGoogleMailReminder(
           email,
           matchTitle,
           `${match.league.name} - ${match.serie.name} maçı ${reminderMinutes} dakika içinde başlayacak!`,
@@ -243,6 +243,9 @@ const ReminderModal: React.FC<ReminderModalProps> = ({ match, onClose }) => {
         
         if (emailResult.success) {
           setIsSuccess(true);
+        } else if (emailResult.authRequired && emailResult.authUrl) {
+          // Kullanıcı zaten authUrl'e yönlendirilecek, sadece mesajı göster
+          setError(emailResult.message || 'Google hesabınızla yetkilendirme gerekiyor. Yönlendiriliyorsunuz...');
         } else {
           throw new Error(emailResult.message || 'E-posta bildirimi gönderilemedi');
         }
@@ -366,7 +369,7 @@ const ReminderModal: React.FC<ReminderModalProps> = ({ match, onClose }) => {
                     className="h-4 w-4 border-gray-300 text-primary-600 focus:ring-primary-500"
                   />
                   <label htmlFor="email" className="ml-3 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                    E-posta bildirimi
+                    E-posta bildirimi (Google Mail)
                   </label>
                 </div>
                 
@@ -403,7 +406,7 @@ const ReminderModal: React.FC<ReminderModalProps> = ({ match, onClose }) => {
               </select>
             </div>
             
-            <div className="flex justify-end space-x-3">
+            <div className="flex items-center justify-end space-x-3">
               <button
                 type="button"
                 onClick={onClose}

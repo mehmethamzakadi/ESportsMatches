@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect } from 'react';
-import ReminderService from '@/services/ReminderService';
+import ClientReminderService from '@/services/ClientReminderService';
 import NotificationService from '@/services/NotificationService';
 
 interface ReminderProviderProps {
@@ -13,7 +13,7 @@ const ReminderProvider: React.FC<ReminderProviderProps> = ({ children }) => {
     // Client tarafında çalıştığından emin ol
     if (typeof window !== 'undefined') {
       // Servisleri başlat
-      const reminderService = ReminderService.getInstance();
+      const reminderService = ClientReminderService.getInstance();
       const notificationService = NotificationService.getInstance();
       
       // Sayfa yüklendiğinde hatırlatıcıları kontrol et

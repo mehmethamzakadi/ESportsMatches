@@ -1,26 +1,22 @@
-// Hatırlatıcı Servisi
+// Hatırlatıcı Servisi - Client Version
 // Bu servis, hatırlatıcıları yönetir ve Service Worker ile iletişim kurar
+// Sadece client-side için güvenli metodları içerir (Node.js modüllerini kullanmaz)
 
 import { ReminderData } from '@/types/reminder';
 import ReminderStorageService from './ReminderStorageService';
 import NotificationService from './NotificationService';
 import CalendarService from './CalendarService';
 import ServiceWorkerManager from './ServiceWorkerManager';
-import EmailService from './EmailService';
-import GoogleMailService from './GoogleMailService';
 
 /**
- * Hatırlatıcı servisi - uygulama için facade sınıf görevi görür
- * Diğer tüm hatırlatıcı servislerini koordine eder
+ * Hatırlatıcı servisi (Client Version) - Tarayıcı ortamı için güvenli sürüm
  */
-class ReminderService {
-  private static instance: ReminderService;
+class ClientReminderService {
+  private static instance: ClientReminderService;
   private storageService: ReminderStorageService;
   private notificationService: NotificationService;
   private calendarService: CalendarService;
   private workerManager: ServiceWorkerManager;
-  private emailService: EmailService;
-  private googleMailService: GoogleMailService;
 
   private constructor() {
     // Servisleri başlat
@@ -28,15 +24,13 @@ class ReminderService {
     this.notificationService = NotificationService.getInstance();
     this.calendarService = CalendarService.getInstance();
     this.workerManager = ServiceWorkerManager.getInstance();
-    this.emailService = EmailService.getInstance();
-    this.googleMailService = GoogleMailService.getInstance();
   }
 
-  public static getInstance(): ReminderService {
-    if (!ReminderService.instance) {
-      ReminderService.instance = new ReminderService();
+  public static getInstance(): ClientReminderService {
+    if (!ClientReminderService.instance) {
+      ClientReminderService.instance = new ClientReminderService();
     }
-    return ReminderService.instance;
+    return ClientReminderService.instance;
   }
 
   /**
@@ -129,88 +123,87 @@ class ReminderService {
   }
   
   /**
-   * E-posta hatırlatıcısı gönder
+   * Google Mail ile e-posta gönder - API üzerinden
    */
-  public async sendEmailReminder(
+  public async sendGoogleMailReminder(
     email: string,
     title: string,
     message: string,
     matchDate: Date | null,
     reminderMinutes: number
   ): Promise<{ success: boolean; message?: string; authRequired?: boolean; authUrl?: string }> {
-    // Google Mail servisini kontrol et, yetkilendirilmiş ise onu kullan
-    if (this.googleMailService.isAuthenticated()) {
-      try {
-        // Tarih bilgilerini formatlama
-        let dateInfo = '';
-        if (matchDate) {
-          const date = matchDate;
-          dateInfo = `Maç Tarihi: ${date.toLocaleString('tr-TR', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-          })}`;
-        }
-        
-        // HTML içerik
-        const html = `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 5px;">
-            <h2 style="color: #333; border-bottom: 2px solid #f1f1f1; padding-bottom: 10px;">${title}</h2>
-            <p style="font-size: 16px; line-height: 1.5; color: #666;">${message}</p>
-            ${dateInfo ? `<p>${dateInfo}</p>` : ''}
-            <p style="font-size: 14px; color: #888; margin-top: 20px;">Bu hatırlatıcı, E-Spor Maç Hatırlatıcı uygulaması tarafından gönderilmiştir.</p>
-          </div>
-        `;
-        
-        // Text içerik
-        const text = `${title}\n\n${message}\n${dateInfo ? `\n${dateInfo}` : ''}\n\nBu hatırlatıcı, E-Spor Maç Hatırlatıcı uygulaması tarafından gönderilmiştir.`;
-        
-        // Google Mail ile gönder
-        return await this.googleMailService.sendEmail(
+    try {
+      // E-posta formatını doğrula
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        return { success: false, message: 'Geçersiz e-posta adresi' };
+      }
+      
+      // API endpoint'e istek gönder
+      const response = await fetch('/api/reminders/gmail', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
           email,
           title,
-          html,
-          text
-        );
-      } catch (error: any) {
-        console.error('Google Mail gönderme hatası:', error);
-        // Google Mail başarısız olursa, normal email servisi ile devam et
+          message,
+          matchDate: matchDate?.toISOString(),
+          reminderMinutes
+        }),
+      });
+      
+      const data = await response.json();
+      
+      // Yetkilendirme gerekiyorsa
+      if (data.authRequired && data.authUrl) {
+        // Kullanıcıyı Google yetkilendirme sayfasına yönlendir
+        window.location.href = data.authUrl;
+        return { 
+          success: false, 
+          message: 'Google hesabınızla yetkilendirme gerekiyor. Yönlendiriliyorsunuz...',
+          authRequired: true,
+          authUrl: data.authUrl
+        };
       }
-    } 
-    
-    // Google Mail yetkilendirilmemiş veya başarısız oldu, normal email servisi ile devam et
-    // Nodemailer ile e-posta gönder
-    return this.emailService.sendReminderEmail(
-      email,
-      title,
-      message,
-      matchDate,
-      reminderMinutes
-    );
+      
+      return data;
+    } catch (error: any) {
+      console.error('Google Mail gönderme hatası:', error);
+      return { 
+        success: false, 
+        message: error.message || 'Bilinmeyen bir hata oluştu'
+      };
+    }
   }
   
   /**
    * E-posta formatını doğrula
    */
   public validateEmail(email: string): boolean {
-    return this.emailService.validateEmail(email);
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
   }
   
   /**
-   * Google Mail yetkilendirmesi gerekip gerekmediğini kontrol et
+   * Google yetkilendirme URL'sini al
    */
-  public isGoogleMailAuthenticated(): boolean {
-    return this.googleMailService.isAuthenticated();
-  }
-  
-  /**
-   * Google Mail için yetkilendirme URL'si oluştur
-   */
-  public getGoogleAuthUrl(): string {
-    return this.googleMailService.generateAuthUrl();
+  public async getGoogleAuthUrl(): Promise<string | null> {
+    try {
+      const response = await fetch('/api/auth/google');
+      const data = await response.json();
+      
+      if (data.success && data.authUrl) {
+        return data.authUrl;
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('Google yetkilendirme URL\'si alınamadı:', error);
+      return null;
+    }
   }
 }
 
-export default ReminderService; 
+export default ClientReminderService; 

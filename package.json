@@ -20,6 +20,8 @@
     "@types/react-dom": "^19.0.4",
     "autoprefixer": "^10.4.14",
     "axios": "^1.8.3",
+    "google-auth-library": "^9.15.1",
+    "googleapis": "^134.0.0",
     "lucide-react": "^0.482.0",
     "next": "^15.2.2",
     "nodemailer": "^6.10.0",

@@ -1,17 +1,5 @@
 import { NextResponse } from 'next/server';
-import nodemailer from 'nodemailer';
-
-// E-posta göndermek için SMTP yapılandırması
-// Bu ayarları kendi SMTP sunucunuza göre değiştirin
-const transporter = nodemailer.createTransport({
-  host: process.env.EMAIL_HOST || 'smtp.example.com',
-  port: parseInt(process.env.EMAIL_PORT || '587'),
-  secure: process.env.EMAIL_SECURE === 'true',
-  auth: {
-    user: process.env.EMAIL_USER || 'user@example.com',
-    pass: process.env.EMAIL_PASSWORD || 'password',
-  },
-});
+import GoogleMailService from '@/services/GoogleMailService';
 
 export async function POST(request: Request) {
   try {
@@ -38,6 +26,22 @@ export async function POST(request: Request) {
       );
     }
     
+    // Google Mail Servisi
+    const googleMailService = GoogleMailService.getInstance();
+    
+    // Yetkilendirme kontrolü
+    if (!googleMailService.isAuthenticated()) {
+      return NextResponse.json(
+        { 
+          success: false, 
+          message: 'Google API yetkilendirmesi yapılmamış',
+          authRequired: true,
+          authUrl: googleMailService.generateAuthUrl()
+        },
+        { status: 401 }
+      );
+    }
+    
     // Hatırlatıcı için tarih bilgilerini format
     let dateInfo = '';
     if (matchDate) {
@@ -61,26 +65,39 @@ export async function POST(request: Request) {
       </div>
     `;
     
-    // E-posta gönderme
-    const mailOptions = {
-      from: `"E-Spor Maç Hatırlatıcısı" <${process.env.EMAIL_FROM || 'noreply@example.com'}>`,
-      to: email,
-      subject: title,
-      html: html,
-      text: message // HTML desteklemeyen e-posta istemcileri için
-    };
-
-    await transporter.sendMail(mailOptions);
+    // Text versiyon
+    const text = `${title}\n\n${message}\n\nBu hatırlatıcı, E-Spor Maç Hatırlatıcı uygulaması tarafından gönderilmiştir.`;
     
-    return NextResponse.json({ 
-      success: true, 
-      message: 'E-posta başarıyla gönderildi' 
-    });
+    // Google API ile e-posta gönder
+    const result = await googleMailService.sendEmail(
+      email,
+      title,
+      html,
+      text
+    );
     
-  } catch (error) {
+    if (result.success) {
+      return NextResponse.json({ 
+        success: true, 
+        message: 'E-posta başarıyla gönderildi' 
+      });
+    } else {
+      return NextResponse.json(
+        { 
+          success: false, 
+          message: result.message || 'E-posta gönderilirken bir hata oluştu' 
+        },
+        { status: 500 }
+      );
+    }
+    
+  } catch (error: any) {
     console.error('E-posta gönderme hatası:', error);
     return NextResponse.json(
-      { message: 'E-posta gönderilirken bir hata oluştu' },
+      { 
+        success: false, 
+        message: error.message || 'E-posta gönderilirken bir hata oluştu' 
+      },
       { status: 500 }
     );
   }
