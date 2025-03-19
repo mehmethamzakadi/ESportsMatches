@@ -9,7 +9,6 @@ import fs from 'fs';
 class GoogleMailService {
   private static instance: GoogleMailService;
   private oauth2Client: OAuth2Client | null = null;
-  private credentials: any = null;
   private tokens: any = null;
 
   private constructor() {
@@ -28,16 +27,20 @@ class GoogleMailService {
    */
   private initializeCredentials() {
     try {
-      // Client secret dosyasını yükle
-      const credentialsPath = path.join(process.cwd(), 'client_secret_285751676074-shdrutd1fg8s24fknrf48mq8vhhu6i87.apps.googleusercontent.com.json');
-      const credentialsContent = fs.readFileSync(credentialsPath, 'utf8');
-      this.credentials = JSON.parse(credentialsContent);
+      // .env.local dosyasından kimlik bilgilerini oku
+      const clientId = process.env.GOOGLE_CLIENT_ID;
+      const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+      const redirectUri = process.env.OAUTH_REDIRECT_URI || 'http://localhost:3000/api/auth/google/callback';
+
+      if (!clientId || !clientSecret) {
+        throw new Error('GOOGLE_CLIENT_ID ve GOOGLE_CLIENT_SECRET .env.local dosyasında tanımlanmalıdır');
+      }
 
       // OAuth2 client oluştur
       this.oauth2Client = new OAuth2Client(
-        this.credentials.web.client_id,
-        this.credentials.web.client_secret,
-        process.env.OAUTH_REDIRECT_URI || 'http://localhost:3000/api/auth/google/callback'
+        clientId,
+        clientSecret,
+        redirectUri
       );
 
       // Eğer token varsa, yükle

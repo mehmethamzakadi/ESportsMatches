@@ -33,3 +33,7 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts 
 node_modules
+
+# Google Auth
+token.json
+client_secret*.json
