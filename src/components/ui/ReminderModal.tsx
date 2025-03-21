@@ -4,7 +4,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Match } from '@/types/match';
 import ClientReminderService from '@/services/ClientReminderService';
 import NotificationService from '@/services/NotificationService';
-import CalendarService from '@/services/CalendarService';
 import { createPortal } from 'react-dom';
 import { XMarkIcon as XIcon, CheckCircleIcon, ExclamationTriangleIcon as ExclamationIcon, XCircleIcon } from '@heroicons/react/24/outline';
 import { ReminderData } from '@/types/reminder';
@@ -27,7 +26,6 @@ const ReminderModal: React.FC<ReminderModalProps> = ({ match, onClose }) => {
   // Servis instansları
   const reminderService = ClientReminderService.getInstance();
   const notificationService = NotificationService.getInstance();
-  const calendarService = CalendarService.getInstance();
 
   // Maç bilgilerini formatla
   const matchTitle = `${match.opponents[0]?.opponent.name || 'TBD'} vs ${match.opponents[1]?.opponent.name || 'TBD'}`;
@@ -127,43 +125,6 @@ const ReminderModal: React.FC<ReminderModalProps> = ({ match, onClose }) => {
     }
   };
 
-  // Takvim dosyası oluştur ve indir
-  const createCalendarFile = () => {
-    if (!matchDate) {
-      setError('Maç tarihi belirtilmemiş.');
-      return;
-    }
-
-    try {
-      const reminderMinutes = parseInt(reminderTime, 10);
-      
-      // iCalendar içeriği oluştur
-      const icsContent = calendarService.createCalendarContent(
-        matchTitle,
-        `${match.league.name} - ${match.serie.name}`,
-        matchDate,
-        reminderMinutes
-      );
-      
-      // URL oluşturup dosyayı indir
-      const downloadUrl = calendarService.generateCalendarURL(icsContent);
-      const link = document.createElement('a');
-      link.href = downloadUrl;
-      link.download = `match_${match.id}.ics`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      
-      // URL'i temizle
-      URL.revokeObjectURL(downloadUrl);
-      
-      setIsSuccess(true);
-    } catch (error) {
-      setError('Takvim dosyası oluşturulurken bir hata oluştu.');
-      console.error('Calendar file creation error:', error);
-    }
-  };
-
   // Hatırlatıcı oluştur
   const createReminder = async () => {
     setIsSubmitting(true);
@@ -229,210 +190,209 @@ const ReminderModal: React.FC<ReminderModalProps> = ({ match, onClose }) => {
         // Hatırlatıcıyı kaydet
         reminderService.addReminder(reminderData);
         setIsSuccess(true);
-      } else if (selectedOption === 'calendar') {
-        createCalendarFile();
       } else if (selectedOption === 'email') {
-        // Google Mail API ile e-posta gönder
-        const emailResult = await reminderService.sendGoogleMailReminder(
-          email,
-          matchTitle,
-          `${match.league.name} - ${match.serie.name} maçı ${reminderMinutes} dakika içinde başlayacak!`,
-          matchDate,
-          reminderMinutes
-        );
+        // E-posta için hatırlatıcı verisi oluştur
+        const emailReminderData: ReminderData = {
+          id: `email_${match.id}_${Date.now()}`,
+          title: matchTitle,
+          message: `${match.league.name} - ${match.serie.name} maçı ${reminderMinutes} dakika içinde başlayacak!`,
+          matchDate: matchDate?.toISOString() || null,
+          reminderTime: reminderMinutes,
+          email: email, // E-posta bilgisini ekle
+          created: new Date().toISOString()
+        };
         
-        if (emailResult.success) {
-          setIsSuccess(true);
-        } else if (emailResult.authRequired && emailResult.authUrl) {
-          // Kullanıcı zaten authUrl'e yönlendirilecek, sadece mesajı göster
-          setError(emailResult.message || 'Google hesabınızla yetkilendirme gerekiyor. Yönlendiriliyorsunuz...');
-        } else {
-          throw new Error(emailResult.message || 'E-posta bildirimi gönderilemedi');
-        }
+        // E-posta hatırlatıcısını kaydet
+        reminderService.addReminder(emailReminderData);
+        setIsSuccess(true);
       }
-    } catch (err: any) {
-      setError(err.message || 'Hatırlatıcı oluşturulurken bir hata oluştu.');
-      console.error('Reminder creation error:', err);
+    } catch (error) {
+      setError((error as Error).message || 'Hatırlatıcı oluşturulurken bir hata oluştu.');
+      console.error('Reminder creation error:', error);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Eğer client tarafında değilse, içerik render edilmiyor
-  if (!mounted) return null;
-
-  // Modal içeriği
-  return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={handleOutsideClick}>
-      <div ref={modalRef} className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl dark:bg-gray-800">
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white">Maç Hatırlatıcısı Oluştur</h2>
+  // Modalı oluştur
+  const modalContent = (
+    <div 
+      className="fixed inset-0 flex items-center justify-center z-50 p-4 bg-black bg-opacity-50"
+      onClick={handleOutsideClick}
+    >
+      <div 
+        ref={modalRef}
+        className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto transition-colors duration-200"
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Modal Başlık */}
+        <div className="flex justify-between items-center p-4 border-b dark:border-gray-700">
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+            Maç Hatırlatıcısı
+          </h3>
           <button
             onClick={onClose}
-            className="rounded-full p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white"
+            className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 focus:outline-none"
           >
-            <XIcon className="h-6 w-6" />
+            <XIcon className="h-5 w-5" />
           </button>
         </div>
         
-        <div className="mb-4">
-          <p className="text-sm text-gray-600 dark:text-gray-300">
-            <strong>{matchTitle}</strong>
-            <br />
-            {formattedDate}
-          </p>
-        </div>
-        
-        {isSuccess ? (
-          <div className="rounded-md bg-green-50 p-4 dark:bg-green-900/20">
-            <div className="flex">
-              <div className="flex-shrink-0">
-                <CheckCircleIcon className="h-5 w-5 text-green-400" aria-hidden="true" />
-              </div>
-              <div className="ml-3">
-                <p className="text-sm font-medium text-green-800 dark:text-green-400">
-                  Hatırlatıcı başarıyla oluşturuldu!
-                </p>
-              </div>
+        {/* Modal İçerik */}
+        <div className="p-4">
+          {/* Başarılı Mesajı */}
+          {isSuccess ? (
+            <div className="flex flex-col items-center p-6 text-center">
+              <CheckCircleIcon className="h-12 w-12 text-success-500 mb-4" />
+              <h4 className="text-xl font-medium text-gray-900 dark:text-white mb-2">
+                Hatırlatıcı Oluşturuldu!
+              </h4>
+              <p className="text-gray-600 dark:text-gray-300">
+                Maç zamanı yaklaştığında size bildirim gönderilecek.
+              </p>
             </div>
-          </div>
-        ) : (
-          <>
-            {error && (
-              <div className="mb-4 rounded-md bg-red-50 p-4 dark:bg-red-900/20">
-                <div className="flex">
-                  <div className="flex-shrink-0">
-                    <XCircleIcon className="h-5 w-5 text-red-400" aria-hidden="true" />
-                  </div>
-                  <div className="ml-3">
-                    <p className="text-sm font-medium text-red-800 dark:text-red-400">{error}</p>
-                  </div>
+          ) : (
+            <>
+              {/* Maç Bilgileri */}
+              <div className="mb-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-md">
+                <div className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
+                  Maç:
+                </div>
+                <div className="font-medium text-gray-900 dark:text-white">
+                  {matchTitle}
+                </div>
+                <div className="text-sm font-medium text-gray-500 dark:text-gray-400 mt-2 mb-1">
+                  Tarih:
+                </div>
+                <div className="font-medium text-gray-900 dark:text-white">
+                  {formattedDate}
                 </div>
               </div>
-            )}
-            
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Hatırlatıcı tipi:
-              </label>
-              <div className="space-y-2">
-                <div className="flex items-center">
-                  <input
-                    id="browser"
-                    name="notificationType"
-                    type="radio"
-                    value="browser"
-                    checked={selectedOption === 'browser'}
-                    onChange={() => setSelectedOption('browser')}
-                    className="h-4 w-4 border-gray-300 text-primary-600 focus:ring-primary-500"
-                  />
-                  <label htmlFor="browser" className="ml-3 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Tarayıcı bildirimi
-                  </label>
+  
+              {/* Hata Mesajı */}
+              {error && (
+                <div className="mb-4 p-3 bg-danger-50 dark:bg-danger-900/30 text-danger-800 dark:text-danger-300 rounded-md flex items-start">
+                  <ExclamationIcon className="h-5 w-5 mr-2 flex-shrink-0 mt-0.5" />
+                  <div>{error}</div>
                 </div>
-                
-                {selectedOption === 'browser' && notificationPermission !== 'granted' && notificationSupported && (
-                  <div className="ml-7">
-                    <button
-                      type="button"
-                      onClick={requestNotificationPermission}
-                      className="inline-flex items-center text-xs text-primary-600 hover:text-primary-700 dark:text-primary-400"
-                    >
-                      Bildirim izni ver
-                    </button>
-                  </div>
-                )}
-                
-                <div className="flex items-center">
-                  <input
-                    id="calendar"
-                    name="notificationType"
-                    type="radio"
-                    value="calendar"
-                    checked={selectedOption === 'calendar'}
-                    onChange={() => setSelectedOption('calendar')}
-                    className="h-4 w-4 border-gray-300 text-primary-600 focus:ring-primary-500"
-                  />
-                  <label htmlFor="calendar" className="ml-3 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Takvim dosyası
-                  </label>
-                </div>
-                
-                <div className="flex items-center">
-                  <input
-                    id="email"
-                    name="notificationType"
-                    type="radio"
-                    value="email"
-                    checked={selectedOption === 'email'}
-                    onChange={() => setSelectedOption('email')}
-                    className="h-4 w-4 border-gray-300 text-primary-600 focus:ring-primary-500"
-                  />
-                  <label htmlFor="email" className="ml-3 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                    E-posta bildirimi (Google Mail)
-                  </label>
-                </div>
-                
-                {selectedOption === 'email' && (
-                  <div className="ml-7 mt-2">
+              )}
+              
+              {/* Hatırlatıcı Türü Seçimi */}
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Hatırlatıcı Türü
+                </label>
+                <div className="flex flex-col space-y-2">
+                  <label className="inline-flex items-center">
                     <input
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="E-posta adresiniz"
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                      type="radio"
+                      className="form-radio text-primary-600 dark:text-primary-400"
+                      name="reminder-type"
+                      value="browser"
+                      checked={selectedOption === 'browser'}
+                      onChange={() => setSelectedOption('browser')}
                     />
-                  </div>
-                )}
+                    <span className="ml-2 text-gray-700 dark:text-gray-300">
+                      Tarayıcı Bildirimi
+                    </span>
+                  </label>
+                  <label className="inline-flex items-center">
+                    <input
+                      type="radio"
+                      className="form-radio text-primary-600 dark:text-primary-400"
+                      name="reminder-type"
+                      value="email"
+                      checked={selectedOption === 'email'}
+                      onChange={() => setSelectedOption('email')}
+                    />
+                    <span className="ml-2 text-gray-700 dark:text-gray-300">
+                      E-posta Bildirimi
+                    </span>
+                  </label>
+                </div>
               </div>
-            </div>
-            
-            <div className="mb-6">
-              <label htmlFor="reminderTime" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Hatırlatma zamanı:
-              </label>
-              <select
-                id="reminderTime"
-                value={reminderTime}
-                onChange={(e) => setReminderTime(e.target.value)}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-              >
-                <option value="5">5 dakika önce</option>
-                <option value="15">15 dakika önce</option>
-                <option value="30">30 dakika önce</option>
-                <option value="60">1 saat önce</option>
-                <option value="120">2 saat önce</option>
-                <option value="1440">1 gün önce</option>
-              </select>
-            </div>
-            
-            <div className="flex items-center justify-end space-x-3">
-              <button
-                type="button"
-                onClick={onClose}
-                className="inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600"
-              >
-                İptal
-              </button>
-              <button
-                type="button"
-                onClick={createReminder}
-                disabled={isSubmitting || (selectedOption === 'email' && !email)}
-                className={`inline-flex justify-center rounded-md border border-transparent px-4 py-2 text-sm font-medium text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 ${
-                  isSubmitting || (selectedOption === 'email' && !email)
-                    ? 'bg-primary-400 cursor-not-allowed'
-                    : 'bg-primary-600 hover:bg-primary-700 focus:ring-primary-500'
-                }`}
-              >
-                {isSubmitting ? 'İşleniyor...' : 'Hatırlatıcı Oluştur'}
-              </button>
-            </div>
-          </>
-        )}
+              
+              {/* E-posta Girişi (Sadece e-posta türü seçildiğinde) */}
+              {selectedOption === 'email' && (
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    E-posta Adresi
+                  </label>
+                  <input
+                    type="email"
+                    className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    placeholder="email@adresiniz.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
+                </div>
+              )}
+              
+              {/* Hatırlatıcı Zamanı */}
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Hatırlatıcı Zamanı
+                </label>
+                <select
+                  className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  value={reminderTime}
+                  onChange={(e) => setReminderTime(e.target.value)}
+                >
+                  <option value="5">5 dakika önce</option>
+                  <option value="15">15 dakika önce</option>
+                  <option value="30">30 dakika önce</option>
+                  <option value="60">1 saat önce</option>
+                  <option value="120">2 saat önce</option>
+                  <option value="1440">1 gün önce</option>
+                </select>
+              </div>
+              
+              {/* İzin Bildirim Mesajı (Tarayıcı bildirimi seçiliyse) */}
+              {selectedOption === 'browser' && notificationPermission !== 'granted' && (
+                <div className="mb-4 p-3 bg-info-50 dark:bg-info-900/30 text-info-800 dark:text-info-300 rounded-md text-sm">
+                  <p className="mb-2">Bu tarayıcıda bildirim izni gerekiyor.</p>
+                  <button
+                    onClick={requestNotificationPermission}
+                    className="w-full px-3 py-2 bg-info-600 hover:bg-info-700 dark:bg-info-700 dark:hover:bg-info-800 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-info-500 focus:ring-opacity-50 text-sm font-medium"
+                  >
+                    Bildirim İzni İste
+                  </button>
+                </div>
+              )}
+              
+              {/* Bildirim Desteği Uyarısı */}
+              {selectedOption === 'browser' && !notificationSupported && (
+                <div className="mb-4 p-3 bg-warning-50 dark:bg-warning-900/30 text-warning-800 dark:text-warning-300 rounded-md flex items-start text-sm">
+                  <ExclamationIcon className="h-5 w-5 mr-2 flex-shrink-0 mt-0.5" />
+                  <div>
+                    {notificationSupportReason || 'Bu cihaz veya tarayıcı web bildirimlerini desteklemiyor. Lütfen başka bir hatırlatıcı yöntemi seçin.'}
+                  </div>
+                </div>
+              )}
+              
+              {/* Butonlar */}
+              <div className="mt-6">
+                <button
+                  onClick={createReminder}
+                  disabled={isSubmitting || (selectedOption === 'browser' && notificationPermission !== 'granted')}
+                  className={`w-full px-4 py-2 rounded-md text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-50 font-medium ${
+                    (isSubmitting || (selectedOption === 'browser' && notificationPermission !== 'granted'))
+                      ? 'bg-gray-400 dark:bg-gray-600 cursor-not-allowed'
+                      : 'bg-primary-600 hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-800'
+                  }`}
+                >
+                  {isSubmitting ? 'İşlem Yapılıyor...' : 'Hatırlatıcı Oluştur'}
+                </button>
+              </div>
+            </>
+          )}
+        </div>
       </div>
-    </div>,
-    document.body
+    </div>
   );
+
+  // Portal kullanarak body'ye modal ekle
+  return mounted ? createPortal(modalContent, document.body) : null;
 };
 
 export default ReminderModal; 

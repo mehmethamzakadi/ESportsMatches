@@ -9,4 +9,5 @@ export interface ReminderData {
   reminderTime: number; // Dakika cinsinden
   created: string;
   notified?: boolean;
+  email?: string; // E-posta bildirimleri için e-posta adresi
 } 

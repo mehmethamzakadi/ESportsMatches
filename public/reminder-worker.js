@@ -108,7 +108,7 @@ async function checkReminders() {
     const now = new Date();
     
     // Zamanı gelen hatırlatıcıları kontrol et
-    reminders.forEach((reminder) => {
+    reminders.forEach(async (reminder) => {
       if (!reminder.matchDate || !reminder.reminderTime) return;
       
       const matchDate = new Date(reminder.matchDate);
@@ -116,27 +116,59 @@ async function checkReminders() {
       
       // Şu an hatırlatma zamanı geldiyse ve daha önce bildirim gönderilmediyse
       if (now >= reminderDate && now < matchDate && !reminder.notified) {
-        // Bildirim gönder
-        self.registration.showNotification('Maç Hatırlatıcısı', {
-          body: reminder.message || 'Maç başlamak üzere!',
-          icon: '/logo.png',
-          badge: '/badge.png',
-          data: {
-            matchId: reminder.id.replace('match_', ''),
-            url: '/'
-          },
-          actions: [
-            {
-              action: 'view',
-              title: 'Maçı Görüntüle'
+        // E-posta hatırlatıcısı mı kontrol et
+        if (reminder.email) {
+          try {
+            // E-posta gönderme API'sine istek gönder
+            const response = await fetch('/api/reminders/gmail', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                email: reminder.email,
+                title: reminder.title,
+                message: reminder.message,
+                matchDate: reminder.matchDate,
+                reminderMinutes: reminder.reminderTime,
+              }),
+            });
+            
+            // İşlemin başarılı olup olmadığını kontrol et
+            if (response.ok) {
+              console.log(`E-posta hatırlatıcısı gönderildi: ${reminder.id}`);
+              reminder.notified = true;
+            } else {
+              console.error(`E-posta hatırlatıcısı gönderilemedi: ${reminder.id}`);
+              const errorData = await response.json().catch(() => ({}));
+              console.error('E-posta hatası detayı:', errorData);
             }
-          ],
-          vibrate: [200, 100, 200],
-          requireInteraction: true
-        });
-        
-        // Hatırlatıcıyı bildirildi olarak işaretle
-        reminder.notified = true;
+          } catch (error) {
+            console.error('E-posta gönderme hatası:', error);
+          }
+        } else {
+          // Normal tarayıcı bildirimi gönder
+          self.registration.showNotification('Maç Hatırlatıcısı', {
+            body: reminder.message || 'Maç başlamak üzere!',
+            icon: '/logo.png',
+            badge: '/badge.png',
+            data: {
+              matchId: reminder.id.replace('match_', ''),
+              url: '/'
+            },
+            actions: [
+              {
+                action: 'view',
+                title: 'Maçı Görüntüle'
+              }
+            ],
+            vibrate: [200, 100, 200],
+            requireInteraction: true
+          });
+          
+          // Hatırlatıcıyı bildirildi olarak işaretle
+          reminder.notified = true;
+        }
         
         // İstemciye güncellenmiş hatırlatıcıları gönder
         client.postMessage({

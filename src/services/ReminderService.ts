@@ -4,9 +4,7 @@
 import { ReminderData } from '@/types/reminder';
 import ReminderStorageService from './ReminderStorageService';
 import NotificationService from './NotificationService';
-import CalendarService from './CalendarService';
 import ServiceWorkerManager from './ServiceWorkerManager';
-import EmailService from './EmailService';
 import GoogleMailService from './GoogleMailService';
 
 /**
@@ -17,18 +15,14 @@ class ReminderService {
   private static instance: ReminderService;
   private storageService: ReminderStorageService;
   private notificationService: NotificationService;
-  private calendarService: CalendarService;
   private workerManager: ServiceWorkerManager;
-  private emailService: EmailService;
   private googleMailService: GoogleMailService;
 
   private constructor() {
     // Servisleri başlat
     this.storageService = ReminderStorageService.getInstance();
     this.notificationService = NotificationService.getInstance();
-    this.calendarService = CalendarService.getInstance();
     this.workerManager = ServiceWorkerManager.getInstance();
-    this.emailService = EmailService.getInstance();
     this.googleMailService = GoogleMailService.getInstance();
   }
 
@@ -105,31 +99,7 @@ class ReminderService {
   }
 
   /**
-   * Takvim dosyası içeriği oluştur
-   */
-  public createCalendarFile(
-    title: string,
-    description: string,
-    startDate: Date,
-    reminderMinutes: number
-  ): string {
-    return this.calendarService.createCalendarContent(
-      title,
-      description,
-      startDate,
-      reminderMinutes
-    );
-  }
-
-  /**
-   * Takvim dosyası için URL oluştur
-   */
-  public generateCalendarURL(icsContent: string): string {
-    return this.calendarService.generateCalendarURL(icsContent);
-  }
-  
-  /**
-   * E-posta hatırlatıcısı gönder
+   * E-posta hatırlatıcı gönder
    */
   public async sendEmailReminder(
     email: string,
@@ -137,10 +107,10 @@ class ReminderService {
     message: string,
     matchDate: Date | null,
     reminderMinutes: number
-  ): Promise<{ success: boolean; message?: string; authRequired?: boolean; authUrl?: string }> {
-    // Google Mail servisini kontrol et, yetkilendirilmiş ise onu kullan
-    if (this.googleMailService.isAuthenticated()) {
-      try {
+  ): Promise<{ success: boolean; message?: string }> {
+    try {
+      // E-posta gönder
+      if (this.googleMailService.isAuthenticated()) {
         // Tarih bilgilerini formatlama
         let dateInfo = '';
         if (matchDate) {
@@ -174,39 +144,38 @@ class ReminderService {
           html,
           text
         );
-      } catch (error: any) {
-        console.error('Google Mail gönderme hatası:', error);
-        // Google Mail başarısız olursa, normal email servisi ile devam et
+      } else {
+        return {
+          success: false,
+          message: 'Google Mail yetkilendirmesi gerekiyor'
+        };
       }
-    } 
-    
-    // Google Mail yetkilendirilmemiş veya başarısız oldu, normal email servisi ile devam et
-    // Nodemailer ile e-posta gönder
-    return this.emailService.sendReminderEmail(
-      email,
-      title,
-      message,
-      matchDate,
-      reminderMinutes
-    );
+    } catch (error) {
+      console.error('Email sending error:', error);
+      return {
+        success: false,
+        message: 'E-posta gönderirken bir hata oluştu.'
+      };
+    }
   }
-  
+
   /**
    * E-posta formatını doğrula
    */
   public validateEmail(email: string): boolean {
-    return this.emailService.validateEmail(email);
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
   }
-  
+
   /**
-   * Google Mail yetkilendirmesi gerekip gerekmediğini kontrol et
+   * Google Mail yetkilendirme durumunu kontrol et
    */
   public isGoogleMailAuthenticated(): boolean {
     return this.googleMailService.isAuthenticated();
   }
-  
+
   /**
-   * Google Mail için yetkilendirme URL'si oluştur
+   * Google yetkilendirme URL'i al
    */
   public getGoogleAuthUrl(): string {
     return this.googleMailService.generateAuthUrl();

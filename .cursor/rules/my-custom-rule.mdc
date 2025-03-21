@@ -1,0 +1,109 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# ESportsMatches Uygulama Analizi
+
+## Uygulama Genel Bakış
+Bu uygulama, CS2 E-Spor maçlarını takip etmek için geliştirilmiş bir web uygulamasıdır. Aktif, yaklaşan ve geçmiş maçları görüntülemek, favori maçlar eklemek ve maç hatırlatıcıları ayarlamak gibi özellikleri içerir.
+
+## Teknoloji Yığını
+- **Framework**: Next.js 15
+- **UI**: React 19, TailwindCSS
+- **Veri Yönetimi**: SWR (stale-while-revalidate)
+- **API**: PandaScore API
+- **Bildirimler**: Web Push, Email (Google Mail API)
+- **Dil**: TypeScript
+
+## Proje Yapısı
+
+### Kök Dizin
+- `.next/`: Next.js build çıktıları
+- `public/`: Statik dosyalar
+- `src/`: Kaynak kodları
+- Yapılandırma dosyaları: `next.config.js`, `tailwind.config.js`, `tsconfig.json`, vb.
+
+### Kaynak Kod Yapısı (`src/`)
+- `app/`: Next.js App Router yapısı (sayfa ve API endpoint'leri)
+- `components/`: Yeniden kullanılabilir UI bileşenleri
+- `types/`: TypeScript tipi tanımlamaları
+- `services/`: Uygulama servisleri
+- `lib/`: Hook'lar ve yardımcı fonksiyonlar
+- `utils/`: Yardımcı işlevler
+- `hooks/`: React hook'ları
+
+## Ana Özellikler
+
+### Maç Takibi
+- Aktif maçları görüntüleme (`/`)
+- Yaklaşan maçları görüntüleme (`/upcoming`)
+- Geçmiş maçları görüntüleme (`/past`)
+
+### Favori Maçlar
+- Favori maçları kaydetme
+- Favorilere eklenen maçları görüntüleme (`/favorites`)
+
+### Hatırlatıcılar
+- Web bildirimleri ile hatırlatma
+- E-posta bildirimleri ile hatırlatma
+
+### Tema Desteği
+- Koyu/Açık tema desteği
+
+## Veri Modelleri
+
+### Match
+Ana maç verisi modeli, PandaScore API'sinden alınan maç verilerini temsil eder.
+
+### Reminder
+Kullanıcı hatırlatıcılarını temsil eden model.
+
+## API Entegrasyonları
+
+### PandaScore API
+- `GET /api/matches/running`: Aktif maçları getirme
+- `GET /api/matches/upcoming`: Yaklaşan maçları getirme
+- `GET /api/matches/past`: Geçmiş maçları getirme
+
+### Google Mail API
+- E-posta bildirimleri göndermek için kullanılır
+
+## Bileşen Yapısı
+
+### Sayfa Bileşenleri
+- `app/page.tsx`: Ana sayfa (Aktif maçlar)
+- `app/upcoming/page.tsx`: Yaklaşan maçlar sayfası
+- `app/past/page.tsx`: Geçmiş maçlar sayfası
+- `app/favorites/page.tsx`: Favori maçlar sayfası
+
+### UI Bileşenleri
+- `Header`: Sayfa başlığı ve tema değiştirme
+- `TabNavigation`: Sayfalar arası gezinti
+- `MatchList`: Maç listesi
+- `MatchCard`: Bireysel maç kartı
+- `SearchBar`: Maç arama bileşeni
+- `ThemeToggle`: Tema değiştirme bileşeni
+- `ScrollToTop`: Sayfanın üstüne dönme bileşeni
+
+## Servisler
+
+### FavoriteService
+Favori maçları yönetme servisi.
+
+### ReminderService
+Hatırlatıcıları yönetme ve zamanlanmış bildirimleri işleme servisi.
+
+### NotificationService
+Web push bildirimlerini yönetme servisi.
+
+### GoogleMailService
+E-posta bildirimleri gönderme servisi.
+
+## Hook'lar
+- `useUpcomingMatches`: Yaklaşan maçları getiren hook
+- `useRunningMatches`: Aktif maçları getiren hook
+- `usePastMatches`: Geçmiş maçları getiren hook
+
+## Tema Yönetimi
+`ThemeContext` bileşeni ile koyu/açık tema tercihi yönetimi. 
