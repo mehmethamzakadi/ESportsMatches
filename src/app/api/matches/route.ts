@@ -70,8 +70,6 @@ export async function GET(request: Request) {
     // Tüm maçları birleştir ve yanıt dön
     const allMatches = [...running, ...upcoming, ...past];
     
-    console.log(`API yanıt verdi: ${allMatches.length} maç alındı.`);
-    
     return NextResponse.json(allMatches);
   } catch (error) {
     console.error('Error fetching matches:', error);

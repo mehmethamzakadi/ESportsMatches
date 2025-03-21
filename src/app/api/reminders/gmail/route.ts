@@ -7,98 +7,147 @@ export async function POST(request: Request) {
     const body = await request.json();
     
     // Gerekli alanları al
-    const { email, title, message, matchDate, reminderMinutes } = body;
+    const { 
+      email, 
+      title, 
+      message, 
+      matchDate, 
+      reminderMinutes 
+    } = body;
     
-    // Eksik zorunlu alanları kontrol et
-    if (!email || !title || !message) {
+    // Zorunlu alanlar
+    if (!email) {
       return NextResponse.json(
-        { message: 'E-posta, başlık ve mesaj zorunludur' },
+        { 
+          success: false, 
+          message: 'Geçerli bir e-posta adresi gereklidir' 
+        }, 
         { status: 400 }
       );
     }
     
-    // E-posta adresini doğrula
+    if (!title) {
+      return NextResponse.json(
+        { 
+          success: false, 
+          message: 'Bir e-posta başlığı gereklidir' 
+        }, 
+        { status: 400 }
+      );
+    }
+    
+    // E-posta formatı kontrolü
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       return NextResponse.json(
-        { message: 'Geçersiz e-posta adresi' },
+        { 
+          success: false, 
+          message: 'Geçerli bir e-posta adresi gereklidir'
+        }, 
         { status: 400 }
       );
     }
     
-    // Google Mail Servisi
-    const googleMailService = GoogleMailService.getInstance();
+    // GoogleMailService örneğini al
+    const mailService = GoogleMailService.getInstance();
     
-    // Yetkilendirme kontrolü
-    if (!googleMailService.isAuthenticated()) {
-      return NextResponse.json(
-        { 
-          success: false, 
-          message: 'Google API yetkilendirmesi yapılmamış',
-          authRequired: true,
-          authUrl: googleMailService.generateAuthUrl()
-        },
-        { status: 401 }
-      );
+    // Supabase'den tokenları yenile
+    await mailService.refreshTokens();
+
+    // Google Mail kimlik doğrulaması kontrolü
+    if (!mailService.isAuthenticated()) {
+      try {
+        // Yetkilendirme URL'si oluştur
+        const authUrl = mailService.generateAuthUrl();
+        
+        return NextResponse.json({
+          success: false,
+          needsAuthentication: true,
+          authUrl,
+          message: 'Google Mail API yetkilendirmesi gerekiyor'
+        }, { status: 401 });
+      } catch (authError) {
+        console.error('Yetkilendirme URL oluşturulurken hata:', authError);
+        return NextResponse.json({
+          success: false,
+          message: 'Yetkilendirme URL oluşturulurken hata oluştu'
+        }, { status: 500 });
+      }
     }
     
-    // Hatırlatıcı için tarih bilgilerini format
-    let dateInfo = '';
+    // Tarih bilgisini formatlama
+    let formattedDate = '';
     if (matchDate) {
-      const date = new Date(matchDate);
-      dateInfo = `<p>Maç Tarihi: ${date.toLocaleString('tr-TR', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
+      const matchDateTime = new Date(matchDate);
+      const options: Intl.DateTimeFormatOptions = {
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric',
         hour: '2-digit',
         minute: '2-digit'
-      })}</p>`;
+      };
+      formattedDate = matchDateTime.toLocaleDateString('tr-TR', options);
     }
     
-    // E-posta içeriği oluştur
-    const html = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 5px;">
-        <h2 style="color: #333; border-bottom: 2px solid #f1f1f1; padding-bottom: 10px;">${title}</h2>
-        <p style="font-size: 16px; line-height: 1.5; color: #666;">${message}</p>
-        ${dateInfo}
-        <p style="font-size: 14px; color: #888; margin-top: 20px;">Bu hatırlatıcı, E-Spor Maç Hatırlatıcı uygulaması tarafından gönderilmiştir.</p>
+    // E-posta içeriğini oluştur - HTML versiyonu
+    const htmlContent = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #2a3f54;">${title}</h2>
+        <p>${message || 'Hatırlatıcı mesajı'}</p>
+        ${matchDate ? `<p><strong>Maç Tarihi:</strong> ${formattedDate}</p>` : ''}
+        ${reminderMinutes ? `<p><strong>Hatırlatıcı:</strong> Maç başlamadan ${reminderMinutes} dakika önce</p>` : ''}
+        <hr style="border: 1px solid #eee; margin: 20px 0;" />
+        <p style="color: #666; font-size: 12px;">Bu e-posta, CS2 Maç Hatırlatıcı uygulaması tarafından gönderilmiştir.</p>
       </div>
     `;
     
-    // Text versiyon
-    const text = `${title}\n\n${message}\n\nBu hatırlatıcı, E-Spor Maç Hatırlatıcı uygulaması tarafından gönderilmiştir.`;
+    // Düz metin versiyonu
+    const textContent = `
+      ${title}
+      
+      ${message || 'Hatırlatıcı mesajı'}
+      ${matchDate ? `Maç Tarihi: ${formattedDate}` : ''}
+      ${reminderMinutes ? `Hatırlatıcı: Maç başlamadan ${reminderMinutes} dakika önce` : ''}
+      
+      Bu e-posta, CS2 Maç Hatırlatıcı uygulaması tarafından gönderilmiştir.
+    `;
     
-    // Google API ile e-posta gönder
-    const result = await googleMailService.sendEmail(
+    // E-posta gönder
+    const result = await mailService.sendEmail(
       email,
       title,
-      html,
-      text
+      htmlContent,
+      textContent
     );
     
     if (result.success) {
-      return NextResponse.json({ 
-        success: true, 
-        message: 'E-posta başarıyla gönderildi' 
+      return NextResponse.json({
+        success: true,
+        message: 'E-posta hatırlatıcısı başarıyla gönderildi'
       });
     } else {
-      return NextResponse.json(
-        { 
-          success: false, 
-          message: result.message || 'E-posta gönderilirken bir hata oluştu' 
-        },
-        { status: 500 }
-      );
+      // Token geçersiz veya yenileme başarısız olmuşsa yeniden yetkilendirme gerekebilir
+      if (result.needsAuthentication) {
+        const authUrl = mailService.generateAuthUrl();
+        return NextResponse.json({
+          success: false,
+          needsAuthentication: true,
+          authUrl,
+          message: result.message || 'Google Mail API yeniden yetkilendirmesi gerekiyor'
+        }, { status: 401 });
+      }
+      
+      return NextResponse.json({
+        success: false,
+        message: result.message || 'E-posta gönderilirken bir hata oluştu'
+      }, { status: 500 });
     }
-    
   } catch (error: any) {
     console.error('E-posta gönderme hatası:', error);
-    return NextResponse.json(
-      { 
-        success: false, 
-        message: error.message || 'E-posta gönderilirken bir hata oluştu' 
-      },
-      { status: 500 }
-    );
+    
+    return NextResponse.json({
+      success: false,
+      message: `E-posta gönderilirken bir hata oluştu: ${error.message || 'Bilinmeyen hata'}`
+    }, { status: 500 });
   }
 } 

@@ -5,15 +5,13 @@ import ReminderStorageService from './ReminderStorageService';
  * Service Worker ile iletişim kurmak ve yönetmek için servis
  */
 class ServiceWorkerManager {
-  private static instance: ServiceWorkerManager;
+  private static instance: ServiceWorkerManager | null = null;
   private serviceWorkerRegistration: ServiceWorkerRegistration | null = null;
   private reminderStorage: ReminderStorageService;
 
   private constructor() {
     // Singleton pattern
     this.reminderStorage = ReminderStorageService.getInstance();
-    this.initServiceWorker();
-    this.setupMessageListener();
   }
 
   public static getInstance(): ServiceWorkerManager {
@@ -24,16 +22,15 @@ class ServiceWorkerManager {
   }
 
   /**
-   * Service Worker'ı başlatır
+   * Service Worker'ı kaydet
    */
-  private async initServiceWorker(): Promise<void> {
-    if (typeof window === 'undefined' || !('serviceWorker' in navigator)) {
+  public async register(): Promise<void> {
+    if (!('serviceWorker' in navigator)) {
       return;
     }
 
     try {
       this.serviceWorkerRegistration = await navigator.serviceWorker.register('/reminder-worker.js');
-      console.log('Reminder Service Worker registered successfully.');
       
       this.setupPeriodicSync();
     } catch (error) {
@@ -42,26 +39,93 @@ class ServiceWorkerManager {
   }
 
   /**
-   * Periyodik senkronizasyonu ayarlar (tarayıcı destekliyorsa)
+   * Periyodik senkronizasyonu ayarla
    */
   private async setupPeriodicSync(): Promise<void> {
-    if (
-      !this.serviceWorkerRegistration || 
-      !('periodicSync' in this.serviceWorkerRegistration) ||
-      typeof window === 'undefined'
-    ) {
+    if (!('periodicSync' in navigator)) {
       return;
     }
-    
+
     try {
-      // @ts-ignore - TypeScript periodicSync'i tanımıyor olabilir
-      await this.serviceWorkerRegistration.periodicSync.register('check-reminders', {
+      const registration = await navigator.serviceWorker.ready;
+
+      if (!('periodicSync' in registration)) {
+        return;
+      }
+
+      const status = await navigator.permissions.query({
+        name: 'periodic-background-sync' as PermissionName
+      });
+
+      if (status.state !== 'granted') {
+        return;
+      }
+
+      await (registration as any).periodicSync.register('reminder-sync', {
         minInterval: 15 * 60 * 1000 // 15 dakika
       });
-      console.log('Periodic sync registered for reminders');
     } catch (err) {
-      console.log('Periodic sync could not be registered:', err);
+      console.error('Periodic sync could not be registered:', err);
     }
+  }
+
+  /**
+   * Post mesajı gönder
+   */
+  public async sendMessage(message: any): Promise<void> {
+    if (!('serviceWorker' in navigator)) {
+      return;
+    }
+
+    const registration = await this.getRegistration();
+    if (registration && registration.active) {
+      registration.active.postMessage(message);
+    }
+  }
+
+  /**
+   * Hatırlatıcı ekle
+   */
+  public async addReminder(reminderData: ReminderData): Promise<void> {
+    await this.sendMessage({
+      type: 'ADD_REMINDER',
+      data: reminderData
+    });
+  }
+
+  /**
+   * Hatırlatıcı sil
+   */
+  public async removeReminder(reminderId: string): Promise<void> {
+    await this.sendMessage({
+      type: 'REMOVE_REMINDER',
+      data: { id: reminderId }
+    });
+  }
+
+  /**
+   * Service Worker kaydını getir
+   */
+  private async getRegistration(): Promise<ServiceWorkerRegistration | null> {
+    if (this.serviceWorkerRegistration) {
+      return this.serviceWorkerRegistration;
+    }
+
+    if (!('serviceWorker' in navigator)) {
+      return null;
+    }
+
+    try {
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      if (registrations.length > 0) {
+        this.serviceWorkerRegistration = registrations[0];
+        return this.serviceWorkerRegistration;
+      }
+    } catch (error) {
+      console.error('Service Worker registration retrieval failed:', error);
+    }
+
+    return null;
   }
 
   /**

@@ -21,8 +21,6 @@ export function useMatches(): MatchesResponse {
         setIsLoading(true);
         setIsError(false);
         
-        console.log('Maçlar yükleniyor...');
-        
         // Yeni API endpoint'ini kullan
         const response = await fetch('/api/matches');
         
@@ -31,7 +29,6 @@ export function useMatches(): MatchesResponse {
         }
         
         const data = await response.json();
-        console.log(`Maçlar yüklendi: ${data.length} maç`);
         setMatches(data);
       } catch (error) {
         console.error('Maç verileri yüklenirken hata:', error);

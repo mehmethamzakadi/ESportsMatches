@@ -39,22 +39,16 @@ export default function FavoritesPage() {
     }
   }, [favoriteService]);
   
-  // Tüm maçlar yüklendiğinde favori maçları filtrele
+  // Favorilere eklenmiş maçları filtrele
   useEffect(() => {
-    if (matches && matches.length > 0) {
-      console.log('Tüm maçlar yüklendi:', matches.length);
-      console.log('Favori IDleri:', favoriteIds);
-      
-      const filtered = matches.filter((match: Match) => {
-        const isIncluded = favoriteIds.includes(match.id);
-        console.log(`Maç ID ${match.id} - Favori mi: ${isIncluded}`);
-        return isIncluded;
+    if (matches && matches.length > 0 && favoriteIds.length > 0) {
+      const filtered = matches.filter(match => {
+        return favoriteIds.includes(match.id);
       });
       
-      console.log('Filtrelenmiş maçlar:', filtered.length);
       setFavoriteMatches(filtered);
     } else {
-      console.log('Hiç maç yüklenemedi veya boş dizi');
+      setFavoriteMatches([]);
     }
   }, [matches, favoriteIds]);
   

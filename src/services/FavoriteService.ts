@@ -6,6 +6,7 @@ class FavoriteService {
   private static instance: FavoriteService;
   private storageKey: string = 'favorite_matches';
   private favorites: number[] = [];
+  private loaded: boolean = false;
 
   private constructor() {
     // Singleton pattern
@@ -26,8 +27,19 @@ class FavoriteService {
     if (typeof window !== 'undefined') {
       try {
         const savedFavorites = localStorage.getItem(this.storageKey);
-        this.favorites = savedFavorites ? JSON.parse(savedFavorites) : [];
-        console.log('Favoriler yüklendi:', this.favorites);
+        if (savedFavorites) {
+          try {
+            this.favorites = JSON.parse(savedFavorites);
+          } catch (error) {
+            console.error('Favoriler ayrıştırılamadı:', error);
+            this.favorites = [];
+          }
+        } else {
+          this.favorites = [];
+        }
+
+        // Yükleme tamamlandı
+        this.loaded = true;
       } catch (error) {
         console.error('Favoriler yüklenirken hata:', error);
         this.favorites = [];
@@ -62,16 +74,12 @@ class FavoriteService {
    * @param matchId Eklenecek maç ID'si
    */
   public addFavorite(matchId: number): void {
-    if (typeof window === 'undefined') return;
-    
-    // Önce güncel listeyi al
-    this.loadFavoritesFromStorage();
+    this.loadFavorites();
     
     if (!this.favorites.includes(matchId)) {
       this.favorites.push(matchId);
-      localStorage.setItem(this.storageKey, JSON.stringify(this.favorites));
-      this.notifyFavoritesChange();
-      console.log(`Maç eklendi: ${matchId}, Yeni liste:`, this.favorites);
+      this.saveFavorites();
+      this.notifyListeners();
     }
   }
 
@@ -80,18 +88,13 @@ class FavoriteService {
    * @param matchId Çıkarılacak maç ID'si
    */
   public removeFavorite(matchId: number): void {
-    if (typeof window === 'undefined') return;
+    this.loadFavorites();
     
-    // Önce güncel listeyi al
-    this.loadFavoritesFromStorage();
-    
-    const updatedFavorites = this.favorites.filter(id => id !== matchId);
-    
-    if (this.favorites.length !== updatedFavorites.length) {
-      this.favorites = updatedFavorites;
-      localStorage.setItem(this.storageKey, JSON.stringify(this.favorites));
-      this.notifyFavoritesChange();
-      console.log(`Maç çıkarıldı: ${matchId}, Yeni liste:`, this.favorites);
+    const index = this.favorites.indexOf(matchId);
+    if (index !== -1) {
+      this.favorites.splice(index, 1);
+      this.saveFavorites();
+      this.notifyListeners();
     }
   }
 
@@ -102,7 +105,7 @@ class FavoriteService {
    */
   public isFavorite(matchId: number): boolean {
     // Güncel listeyi al
-    this.loadFavoritesFromStorage();
+    this.loadFavorites();
     
     return this.favorites.includes(matchId);
   }
@@ -111,7 +114,7 @@ class FavoriteService {
    * Favori listesinin değiştiğini dinleyicilere bildirir
    * Custom event kullanarak diğer bileşenlerin değişiklikleri takip etmesini sağlar
    */
-  private notifyFavoritesChange(): void {
+  private notifyListeners(): void {
     if (typeof window === 'undefined') return;
     
     const event = new CustomEvent('favoritesChanged', {
@@ -131,8 +134,37 @@ class FavoriteService {
     // LocalStorage'dan favori verilerini sil
     localStorage.removeItem(this.storageKey);
     // Değişikliği bildir
-    this.notifyFavoritesChange();
-    console.log('Tüm favoriler temizlendi');
+    this.notifyListeners();
+  }
+
+  private loadFavorites(): void {
+    if (typeof window !== 'undefined') {
+      try {
+        const savedFavorites = localStorage.getItem(this.storageKey);
+        if (savedFavorites) {
+          try {
+            this.favorites = JSON.parse(savedFavorites);
+          } catch (error) {
+            console.error('Favoriler ayrıştırılamadı:', error);
+            this.favorites = [];
+          }
+        } else {
+          this.favorites = [];
+        }
+
+        // Yükleme tamamlandı
+        this.loaded = true;
+      } catch (error) {
+        console.error('Favoriler yüklenirken hata:', error);
+        this.favorites = [];
+      }
+    }
+  }
+
+  private saveFavorites(): void {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(this.storageKey, JSON.stringify(this.favorites));
+    }
   }
 }
 
