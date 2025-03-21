@@ -1,19 +1,75 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import ClientReminderService from '@/services/ClientReminderService';
 
 export default function AuthSuccessPage() {
   const router = useRouter();
+  const [isCreatingReminder, setIsCreatingReminder] = useState(false);
+  const [reminderCreated, setReminderCreated] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const reminderProcessedRef = useRef(false);
   
-  // 3 saniye sonra ana sayfaya yönlendir
+  // Bekleyen hatırlatıcıyı oluştur ve ana sayfaya yönlendir
   useEffect(() => {
-    const timeout = setTimeout(() => {
-      router.push('/');
-    }, 3000);
+    // Eğer işlem zaten yapıldıysa tekrar yapmayı önle
+    if (reminderProcessedRef.current) return;
     
-    return () => clearTimeout(timeout);
-  }, [router]);
+    const createPendingReminder = async () => {
+      // İşlemi yalnızca bir kez çalıştırmak için flag'i ayarla
+      reminderProcessedRef.current = true;
+      
+      try {
+        setIsCreatingReminder(true);
+        
+        // localStorage'dan bekleyen hatırlatıcı bilgilerini al
+        const pendingReminderJSON = localStorage.getItem('pendingEmailReminder');
+        
+        if (!pendingReminderJSON) {
+          // Bekleyen hatırlatıcı bilgisi yok, sadece ana sayfaya yönlendir
+          setTimeout(() => router.push('/'), 3000);
+          return;
+        }
+        
+        // JSON verisini parse et
+        const pendingReminder = JSON.parse(pendingReminderJSON);
+        
+        // ClientReminderService ile e-posta hatırlatıcısı oluştur
+        const reminderService = ClientReminderService.getInstance();
+        const result = await reminderService.sendGoogleMailReminder(
+          pendingReminder.email,
+          pendingReminder.title,
+          pendingReminder.message,
+          pendingReminder.matchDate ? new Date(pendingReminder.matchDate) : null,
+          pendingReminder.reminderMinutes
+        );
+        
+        if (result.success) {
+          setReminderCreated(true);
+          // İşlem tamamlandıktan sonra localStorage'dan temizle
+          localStorage.removeItem('pendingEmailReminder');
+          
+          // 3 saniye sonra ana sayfaya yönlendir
+          setTimeout(() => router.push('/'), 3000);
+        } else {
+          // Hata oluştu, mesajı göster
+          setErrorMessage(result.message);
+          // Hataya rağmen 5 saniye sonra ana sayfaya yönlendir
+          setTimeout(() => router.push('/'), 5000);
+        }
+      } catch (error) {
+        // Hata oluştu, ana sayfaya yönlendir
+        setErrorMessage('Hatırlatıcı oluşturulurken bir hata oluştu.');
+        setTimeout(() => router.push('/'), 5000);
+      } finally {
+        setIsCreatingReminder(false);
+      }
+    };
+    
+    // Fonksiyonu çağır
+    createPendingReminder();
+  }, [router]); // Sadece router'a bağımlı
   
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
@@ -32,6 +88,24 @@ export default function AuthSuccessPage() {
           <p className="text-gray-600 text-center mb-6">
             Google hesabınızla başarıyla yetkilendirildiniz. Artık e-posta bildirimleri için Google Mail servisini kullanabilirsiniz.
           </p>
+          
+          {isCreatingReminder && (
+            <p className="text-sm text-primary-600 font-medium mb-2">
+              Hatırlatıcı oluşturuluyor...
+            </p>
+          )}
+          
+          {reminderCreated && (
+            <p className="text-sm text-success-600 font-medium mb-2">
+              Hatırlatıcı başarıyla oluşturuldu! E-posta gönderildi.
+            </p>
+          )}
+          
+          {errorMessage && (
+            <p className="text-sm text-danger-600 font-medium mb-2">
+              Hata: {errorMessage}
+            </p>
+          )}
           
           <p className="text-sm text-gray-500">
             Ana sayfaya otomatik olarak yönlendiriliyorsunuz...

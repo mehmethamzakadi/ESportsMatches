@@ -46,9 +46,40 @@ class GoogleMailService {
       // Eğer token varsa, yükle
       const tokenPath = path.join(process.cwd(), 'token.json');
       if (fs.existsSync(tokenPath)) {
-        const tokenContent = fs.readFileSync(tokenPath, 'utf8');
-        this.tokens = JSON.parse(tokenContent);
-        this.oauth2Client.setCredentials(this.tokens);
+        try {
+          const tokenContent = fs.readFileSync(tokenPath, 'utf8');
+          
+          if (!tokenContent || tokenContent.trim() === '') {
+            console.error('token.json dosyası boş, siliniyor.');
+            fs.unlinkSync(tokenPath);
+            return;
+          }
+          
+          try {
+            this.tokens = JSON.parse(tokenContent);
+            
+            // Token geçerlilik kontrolü
+            if (!this.tokens || !this.tokens.access_token) {
+              console.error('Geçersiz token içeriği, token.json dosyası siliniyor.');
+              fs.unlinkSync(tokenPath);
+              this.tokens = null;
+              return;
+            }
+            
+            // Token yüklendi, kimlik bilgilerini ayarla
+            this.oauth2Client.setCredentials(this.tokens);
+            console.log('Google Mail token başarıyla yüklendi.');
+          } catch (parseError) {
+            console.error('token.json dosyası JSON formatında değil, siliniyor:', parseError);
+            fs.unlinkSync(tokenPath);
+            this.tokens = null;
+          }
+        } catch (readError) {
+          console.error('token.json dosyası okunamadı:', readError);
+          this.tokens = null;
+        }
+      } else {
+        console.log('token.json dosyası bulunamadı. Yetkilendirme gerekiyor.');
       }
     } catch (error) {
       console.error('Google API kimlik bilgileri yüklenirken hata:', error);
@@ -143,7 +174,7 @@ class GoogleMailService {
       if (error.code === 401) {
         // Token süresi dolmuş olabilir, yenileme token'ını kullanarak yeniden dene
         try {
-          if (this.oauth2Client && this.tokens.refresh_token) {
+          if (this.oauth2Client && this.tokens && this.tokens.refresh_token) {
             const { credentials } = await this.oauth2Client.refreshAccessToken();
             this.tokens = credentials;
             this.oauth2Client.setCredentials(credentials);
@@ -157,6 +188,17 @@ class GoogleMailService {
           }
         } catch (refreshError) {
           console.error('Token yenilenirken hata:', refreshError);
+          
+          // Token yenileme başarısız oldu, token dosyasını sil
+          try {
+            const tokenPath = path.join(process.cwd(), 'token.json');
+            if (fs.existsSync(tokenPath)) {
+              fs.unlinkSync(tokenPath);
+              console.log('Geçersiz token.json dosyası silindi, yeni yetkilendirme gerekiyor.');
+            }
+          } catch (deleteError) {
+            console.error('Token dosyası silinirken hata:', deleteError);
+          }
         }
       }
       

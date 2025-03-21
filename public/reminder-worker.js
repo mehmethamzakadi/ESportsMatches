@@ -118,6 +118,7 @@ async function checkReminders() {
       if (now >= reminderDate && now < matchDate && !reminder.notified) {
         // E-posta hatırlatıcısı mı kontrol et
         if (reminder.email) {
+          /* E-POSTA GÖNDERİMİ GEÇİCİ OLARAK DEVRE DIŞI - Hatırlatıcı oluşturulduğu anda e-posta gönderilir
           try {
             // E-posta gönderme API'sine istek gönder
             const response = await fetch('/api/reminders/gmail', {
@@ -146,6 +147,11 @@ async function checkReminders() {
           } catch (error) {
             console.error('E-posta gönderme hatası:', error);
           }
+          */
+          
+          // E-posta zaten gönderildi olarak işaretle (test sürecinde)
+          console.log(`E-posta hatırlatıcısı zaten gönderilmiş kabul ediliyor: ${reminder.id}`);
+          reminder.notified = true;
         } else {
           // Normal tarayıcı bildirimi gönder
           self.registration.showNotification('Maç Hatırlatıcısı', {

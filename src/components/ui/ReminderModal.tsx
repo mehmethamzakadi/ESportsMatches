@@ -192,19 +192,40 @@ const ReminderModal: React.FC<ReminderModalProps> = ({ match, onClose }) => {
         setIsSuccess(true);
       } else if (selectedOption === 'email') {
         // E-posta için hatırlatıcı verisi oluştur
-        const emailReminderData: ReminderData = {
-          id: `email_${match.id}_${Date.now()}`,
-          title: matchTitle,
-          message: `${match.league.name} - ${match.serie.name} maçı ${reminderMinutes} dakika içinde başlayacak!`,
-          matchDate: matchDate?.toISOString() || null,
-          reminderTime: reminderMinutes,
-          email: email, // E-posta bilgisini ekle
-          created: new Date().toISOString()
-        };
-        
-        // E-posta hatırlatıcısını kaydet
-        reminderService.addReminder(emailReminderData);
-        setIsSuccess(true);
+        const emailTitle = matchTitle;
+        const emailMessage = `${match.league.name} - ${match.serie.name} maçı ${reminderMinutes} dakika içinde başlayacak!`;
+
+        // Anında e-posta gönderme
+        const emailResult = await reminderService.sendGoogleMailReminder(
+          email,
+          emailTitle,
+          emailMessage,
+          matchDate,
+          reminderMinutes
+        );
+
+        if (emailResult.success) {
+          setIsSuccess(true);
+        } else {
+          // Yetkilendirme URL'si varsa otomatik yönlendir
+          if (emailResult.authRequired && emailResult.authUrl) {
+            // Hatırlatıcı bilgilerini localStorage'a kaydet
+            const reminderInfo = {
+              email,
+              title: emailTitle,
+              message: emailMessage,
+              matchDate: matchDate ? matchDate.toISOString() : null,
+              reminderMinutes
+            };
+            localStorage.setItem('pendingEmailReminder', JSON.stringify(reminderInfo));
+            
+            // Aynı sekmede Google yetkilendirme sayfasına yönlendir
+            window.location.href = emailResult.authUrl;
+            return; // Yönlendirme yaptıktan sonra fonksiyonu sonlandır
+          } else {
+            throw new Error(emailResult.message);
+          }
+        }
       }
     } catch (error) {
       setError((error as Error).message || 'Hatırlatıcı oluşturulurken bir hata oluştu.');
@@ -248,7 +269,9 @@ const ReminderModal: React.FC<ReminderModalProps> = ({ match, onClose }) => {
                 Hatırlatıcı Oluşturuldu!
               </h4>
               <p className="text-gray-600 dark:text-gray-300">
-                Maç zamanı yaklaştığında size bildirim gönderilecek.
+                {selectedOption === 'email' 
+                  ? 'E-posta anında gönderildi.' 
+                  : 'Maç zamanı yaklaştığında size bildirim gönderilecek.'}
               </p>
             </div>
           ) : (
@@ -273,7 +296,9 @@ const ReminderModal: React.FC<ReminderModalProps> = ({ match, onClose }) => {
               {error && (
                 <div className="mb-4 p-3 bg-danger-50 dark:bg-danger-900/30 text-danger-800 dark:text-danger-300 rounded-md flex items-start">
                   <ExclamationIcon className="h-5 w-5 mr-2 flex-shrink-0 mt-0.5" />
-                  <div>{error}</div>
+                  <div>
+                    {error}
+                  </div>
                 </div>
               )}
               

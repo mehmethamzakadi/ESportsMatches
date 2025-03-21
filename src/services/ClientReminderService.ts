@@ -131,13 +131,80 @@ class ClientReminderService {
       };
 
       // Hatırlatıcıyı kaydet - bu bilgiler daha sonra ServiceWorker tarafından kontrol edilecek
+      // NOT: Şu anda bu bilgiler kaydediliyor ama test amaçlı olarak hemen mail gönderiliyor
       this.storageService.addOrUpdateReminder(reminderData);
       this.workerManager.notifyServiceWorker();
 
+      // TEST AMAÇLI: Anında e-posta gönderme
+      try {
+        const response = await fetch('/api/reminders/gmail', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email: email,
+            title: title,
+            message: message,
+            matchDate: matchDate.toISOString(),
+            reminderMinutes: reminderMinutes,
+          }),
+        });
+        
+        // Yanıtı analiz et
+        const result = await response.json();
+        
+        if (response.ok) {
+          if (result.success) {
+            return {
+              success: true,
+              message: 'E-posta hatırlatıcısı başarıyla oluşturuldu ve e-posta gönderildi.',
+            };
+          } else {
+            console.error('E-posta gönderme hatası:', result.message);
+            return {
+              success: false,
+              message: result.message || 'E-posta gönderilirken bir hata oluştu.',
+              authRequired: result.authRequired,
+              authUrl: result.authUrl
+            };
+          }
+        } else {
+          console.error('E-posta API isteği başarısız oldu:', response.status, response.statusText);
+          
+          // Yetkilendirme hatası
+          if (response.status === 401) {
+            // Yetkilendirme URL'sini al
+            const authUrl = result.authUrl || await this.getGoogleAuthUrl();
+            
+            return {
+              success: false,
+              message: 'Google Mail yetkilendirmesi gerekiyor. Lütfen aşağıdaki butona tıklayarak hesabınızı yetkilendirin.',
+              authRequired: true,
+              authUrl: authUrl
+            };
+          }
+          
+          return {
+            success: false,
+            message: result.message || 'E-posta gönderilemedi. Sunucu hatası.',
+          };
+        }
+      } catch (error) {
+        console.error('E-posta gönderme işleminde hata:', error);
+        return {
+          success: false,
+          message: 'E-posta gönderilirken bir hata oluştu.',
+        };
+      }
+
+      // Zaman duyarlı e-posta gönderimi için eski kod (şimdilik devre dışı)
+      /* 
       return {
         success: true,
         message: 'E-posta hatırlatıcısı başarıyla oluşturuldu. Maçtan önce e-posta gönderilecek.',
       };
+      */
     } catch (error) {
       console.error('E-posta hatırlatıcısı oluşturulurken hata oluştu:', error);
       return {
