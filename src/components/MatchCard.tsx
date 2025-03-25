@@ -6,8 +6,6 @@ import StatusBadge from './ui/StatusBadge';
 import MatchDate from './ui/MatchDate';
 import TeamLogo from './ui/TeamLogo';
 import StreamEmbed from './ui/StreamEmbed';
-// @ts-ignore
-import ReminderModal from './ui/ReminderModal';
 import FavoriteService from '@/services/FavoriteService';
 import { StarIcon as StarIconOutline } from '@heroicons/react/24/outline';
 import { StarIcon as StarIconSolid } from '@heroicons/react/24/solid';
@@ -19,7 +17,6 @@ interface MatchCardProps {
 
 const MatchCard: React.FC<MatchCardProps> = ({ match, showDates = true }) => {
   const [showStreamEmbed, setShowStreamEmbed] = useState(false);
-  const [showReminderModal, setShowReminderModal] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
   
   const favoriteService = FavoriteService.getInstance();
@@ -220,19 +217,6 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, showDates = true }) => {
               {showStreamEmbed ? 'YAYIN PANELINI KAPAT' : 'CANLI İZLE'}
             </button>
           )}
-          
-          {/* Hatırlatıcı Butonu */}
-          {isUpcoming && (
-            <button 
-              onClick={() => setShowReminderModal(true)}
-              className="flex items-center justify-center px-3 sm:px-4 py-1.5 rounded-md bg-primary-600 hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-800 text-white text-xxs sm:text-xs font-medium transition-all shadow-sm hover:shadow focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-50 w-full sm:w-auto"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              HATIRLATICI EKLE
-            </button>
-          )}
         </div>
       </div>
       
@@ -247,14 +231,6 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, showDates = true }) => {
             }}
           />
         </div>
-      )}
-      
-      {/* Hatırlatıcı Modal */}
-      {showReminderModal && (
-        <ReminderModal
-          match={match}
-          onClose={() => setShowReminderModal(false)}
-        />
       )}
     </div>
   );

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import ThemeToggle from './ThemeToggle';
+import AuthButtons from './AuthButtons';
 
 interface TabItem {
   label: string;
@@ -61,22 +62,26 @@ const TabNavigation: React.FC = () => {
                 );
               })}
             </nav>
-            <div className="px-4 py-2">
+            <div className="flex items-center gap-4 px-4 py-2">
+              <AuthButtons />
               <ThemeToggle />
             </div>
           </div>
         </div>
         
-        {/* Mobile navigation */}
+        {/* Mobile view */}
         <div className="md:hidden">
-          <div className="flex items-center justify-between px-4 py-3">
-            {/* Show the active tab label */}
-            <div className="text-lg font-medium text-gray-900 dark:text-gray-100">
-              {tabs.find(tab => tab.path === pathname)?.label || tabs[0].label}
+          {/* Top bar with active tab and controls */}
+          <div className="flex items-center justify-between px-4 py-2 border-b border-gray-100 dark:border-gray-700">
+            <div className="flex items-center gap-2">
+              <span className="text-lg mr-2">{tabs.find(tab => tab.path === pathname)?.icon}</span>
+              <span className="font-medium text-gray-900 dark:text-gray-100">
+                {tabs.find(tab => tab.path === pathname)?.label}
+              </span>
             </div>
             
-            {/* Menu toggle button and theme toggle side by side */}
-            <div className="flex items-center space-x-3">
+            <div className="flex items-center gap-3">
+              <AuthButtons />
               <ThemeToggle />
               <button 
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -84,11 +89,11 @@ const TabNavigation: React.FC = () => {
                 aria-label="Toggle menu"
               >
                 {isMenuOpen ? (
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 ) : (
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                   </svg>
                 )}
@@ -106,7 +111,7 @@ const TabNavigation: React.FC = () => {
                     key={tab.path}
                     href={tab.path}
                     onClick={() => setIsMenuOpen(false)}
-                    className={`flex items-center px-6 py-4 text-sm font-medium border-b border-gray-100 dark:border-gray-700 transition-colors duration-200 ${
+                    className={`flex items-center px-6 py-3 text-sm font-medium border-b border-gray-100 dark:border-gray-700 transition-colors duration-200 ${
                       isActive
                         ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
                         : 'text-secondary-600 dark:text-secondary-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100'

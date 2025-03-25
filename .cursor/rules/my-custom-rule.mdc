@@ -6,14 +6,13 @@ alwaysApply: true
 # ESportsMatches Uygulama Analizi
 
 ## Uygulama Genel Bakış
-Bu uygulama, CS2 E-Spor maçlarını takip etmek için geliştirilmiş bir web uygulamasıdır. Aktif, yaklaşan ve geçmiş maçları görüntülemek, favori maçlar eklemek ve maç hatırlatıcıları ayarlamak gibi özellikleri içerir.
+Bu uygulama, CS2 E-Spor maçlarını takip etmek için geliştirilmiş bir web uygulamasıdır. Aktif, yaklaşan ve geçmiş maçları görüntülemek ve favori maçlar eklemek gibi özellikleri içerir.
 
 ## Teknoloji Yığını
 - **Framework**: Next.js 15
 - **UI**: React 19, TailwindCSS
 - **Veri Yönetimi**: SWR (stale-while-revalidate)
 - **API**: PandaScore API
-- **Bildirimler**: Web Push, Email (Google Mail API)
 - **Dil**: TypeScript
 
 ## Proje Yapısı
@@ -44,10 +43,6 @@ Bu uygulama, CS2 E-Spor maçlarını takip etmek için geliştirilmiş bir web u
 - Favori maçları kaydetme
 - Favorilere eklenen maçları görüntüleme (`/favorites`)
 
-### Hatırlatıcılar
-- Web bildirimleri ile hatırlatma
-- E-posta bildirimleri ile hatırlatma
-
 ### Tema Desteği
 - Koyu/Açık tema desteği
 
@@ -56,18 +51,12 @@ Bu uygulama, CS2 E-Spor maçlarını takip etmek için geliştirilmiş bir web u
 ### Match
 Ana maç verisi modeli, PandaScore API'sinden alınan maç verilerini temsil eder.
 
-### Reminder
-Kullanıcı hatırlatıcılarını temsil eden model.
-
 ## API Entegrasyonları
 
 ### PandaScore API
 - `GET /api/matches/running`: Aktif maçları getirme
 - `GET /api/matches/upcoming`: Yaklaşan maçları getirme
 - `GET /api/matches/past`: Geçmiş maçları getirme
-
-### Google Mail API
-- E-posta bildirimleri göndermek için kullanılır
 
 ## Bileşen Yapısı
 
@@ -90,15 +79,6 @@ Kullanıcı hatırlatıcılarını temsil eden model.
 
 ### FavoriteService
 Favori maçları yönetme servisi.
-
-### ReminderService
-Hatırlatıcıları yönetme ve zamanlanmış bildirimleri işleme servisi.
-
-### NotificationService
-Web push bildirimlerini yönetme servisi.
-
-### GoogleMailService
-E-posta bildirimleri gönderme servisi.
 
 ## Hook'lar
 - `useUpcomingMatches`: Yaklaşan maçları getiren hook

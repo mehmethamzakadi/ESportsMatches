@@ -21,11 +21,9 @@
     "@types/react-dom": "^19.0.4",
     "autoprefixer": "^10.4.14",
     "axios": "^1.8.3",
-    "google-auth-library": "^9.15.1",
-    "googleapis": "^134.0.0",
     "lucide-react": "^0.482.0",
     "next": "^15.2.2",
-    "nodemailer": "^6.10.0",
+    "next-auth": "^4.24.11",
     "postcss": "^8.4.23",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
@@ -34,7 +32,6 @@
     "typescript": "^5.8.2"
   },
   "devDependencies": {
-    "@tailwindcss/line-clamp": "^0.4.4",
-    "@types/nodemailer": "^6.4.17"
+    "@tailwindcss/line-clamp": "^0.4.4"
   }
 }
