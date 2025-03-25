@@ -37,6 +37,19 @@ export default function AuthButtons() {
     }
   }, [isMenuOpen])
 
+  // Giriş yapıldığında event yayınla
+  useEffect(() => {
+    if (session) {
+      const event = new CustomEvent('loginSuccess');
+      window.dispatchEvent(event);
+    }
+  }, [session]);
+
+  const handleSignIn = () => {
+    // Giriş yaptıktan sonra Gelecek Maçlar sayfasına yönlendir
+    signIn("google", { callbackUrl: "/upcoming" })
+  }
+
   if (session) {
     return (
       <>
@@ -93,18 +106,21 @@ export default function AuthButtons() {
 
   return (
     <button
-      onClick={() => signIn("google", { callbackUrl: "/" })}
-      className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded-md shadow-sm hover:shadow-md transition-all duration-200 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"
+      onClick={handleSignIn}
+      className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 
+                 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 
+                 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700
+                 group"
     >
       <Image
         src="/google.svg"
         alt="Google"
-        width={18}
-        height={18}
-        className="dark:invert"
+        width={20}
+        height={20}
+        className="dark:invert group-hover:scale-110 transition-transform duration-200"
       />
       <span className="text-sm font-medium">
-        Google
+        Google ile Giriş Yap
       </span>
     </button>
   )
