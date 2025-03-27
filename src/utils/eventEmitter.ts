@@ -4,7 +4,7 @@ type EventCallback = (...args: any[]) => void;
 class EventEmitter {
   private events: Record<string, EventCallback[]> = {};
 
-  // Event dinleyici ekle
+  // Event dinleyici eklee
   on(event: string, callback: EventCallback) {
     if (!this.events[event]) {
       this.events[event] = [];
