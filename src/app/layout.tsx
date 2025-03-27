@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import ScrollToTop from '@/components/ScrollToTop';
 import Providers from '@/components/Providers';
+import { Toaster } from 'react-hot-toast';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -34,6 +35,16 @@ export default function RootLayout({
             </footer>
             <ScrollToTop />
           </div>
+          <Toaster 
+            position="bottom-right"
+            toastOptions={{
+              duration: 4000,
+              style: {
+                background: '#333',
+                color: '#fff',
+              },
+            }}
+          />
         </Providers>
       </body>
     </html>

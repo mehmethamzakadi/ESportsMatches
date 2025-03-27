@@ -249,13 +249,11 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, showDates = true }) => {
       )}
 
       {/* Hatırlatıcı Modal */}
-      {isUpcoming && (
-        <ReminderModal
-          isOpen={showReminderModal}
-          onClose={() => setShowReminderModal(false)}
-          matchTime={formatDate(match.begin_at) || ''}
-        />
-      )}
+      <ReminderModal
+        isOpen={showReminderModal}
+        onClose={() => setShowReminderModal(false)}
+        match={match}
+      />
     </div>
   );
 };
