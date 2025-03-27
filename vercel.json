@@ -3,4 +3,4 @@
       "path": "/api/cron/send-reminder",
       "schedule": "*/5 * * * *"
     }]
-  }
+}
