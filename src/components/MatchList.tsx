@@ -140,7 +140,7 @@ const MatchList: React.FC<MatchListProps> = ({ matches, isLoading, isError, titl
     };
   }, []);
 
-  if (isLoading) {
+  if (isLoading || !matches) {
     return <MatchListSkeleton title={title} count={4} />;
   }
 
@@ -148,7 +148,7 @@ const MatchList: React.FC<MatchListProps> = ({ matches, isLoading, isError, titl
     return <ErrorMessage title={title} message="Maç verileri yüklenirken bir hata oluştu. Lütfen daha sonra tekrar deneyin." />;
   }
 
-  if (matches.length === 0) {
+  if (!matches || matches.length === 0) {
     return <EmptyState title={title} message="Şu anda gösterilecek maç bulunmuyor." />;
   }
 

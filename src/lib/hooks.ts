@@ -32,8 +32,15 @@ export function useRunningMatches(page = 1, perPage = 100) {
     `running-matches-${page}-${perPage}`,
     () => getRunningMatches(page, perPage),
     {
-      //refreshInterval: 30000, // Her 30 saniyede bir yenile
       revalidateOnFocus: true,
+      revalidateOnMount: true,
+      revalidateOnReconnect: true,
+      dedupingInterval: 5000,
+      errorRetryCount: 3,
+      suspense: false,
+      fallbackData: [], // Boş array ile başla
+      loadingTimeout: 2000, // 2 saniye loading state'i göster
+      keepPreviousData: true // Önceki veriyi tut
     }
   );
 
