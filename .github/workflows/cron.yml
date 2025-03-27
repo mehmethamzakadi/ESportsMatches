@@ -1,5 +1,6 @@
 name: Send Reminders
 
+# Workflow Tetikleyicileri
 on:
   schedule:
     - cron: '*/5 * * * *'  # Her 5 dakikada bir çalışır
@@ -12,6 +13,7 @@ jobs:
       API_URL: ${{ secrets.VERCEL_URL }}/api/cron/send-reminders
     
     steps:
+      # Secret kontrolü
       - name: Check Required Secrets
         run: |
           if [ -z "${{ secrets.VERCEL_URL }}" ]; then
@@ -23,6 +25,7 @@ jobs:
             exit 1
           fi
 
+      # API çağrısı ve sonuç kontrolü
       - name: Trigger Reminder API
         run: |
           response=$(curl -s -w "\n%{http_code}" -X GET "$API_URL" \
