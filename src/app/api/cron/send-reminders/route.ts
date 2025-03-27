@@ -10,11 +10,11 @@ const supabase = createClient(
 export async function GET(req: Request) {
   try {
     // Sadece GitHub Actions'dan gelen isteklere izin ver
-    const authHeader = req.headers.get('authorization');
-    if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-      console.error('Unauthorized request:', { authHeader });
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    //const authHeader = req.headers.get('authorization');
+    //if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    //  console.error('Unauthorized request:', { authHeader });
+    //  return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    //}
 
     // Şu anki zamandan 5 dakika sonrasına kadar olan hatırlatıcıları al
     const now = new Date();
