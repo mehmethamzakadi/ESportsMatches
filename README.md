@@ -1,109 +1,144 @@
-# E-Spor Maçları Takip Uygulaması
+# ESportsMatches
 
-Bu proje, e-spor maçlarını takip etmek ve hatırlatıcılar oluşturmak için tasarlanmış bir web uygulamasıdır.
+CS2 E-Spor maçlarını takip etmek için geliştirilmiş modern bir web uygulaması.
 
 ## Özellikler
 
-- Yaklaşan ve canlı e-spor maçlarını görüntüleme
-- Maç detaylarını inceleme
-- Favori maçları kaydetme ve yönetme
-- Hatırlatıcı oluşturma:
-  - Tarayıcı bildirimleri
-  - Takvim dosyası indirme
-  - E-posta bildirimleri
-
-## E-posta Bildirimleri Kurulumu
-
-E-posta bildirimleri için bir SMTP sunucusu yapılandırılması gerekmektedir. Aşağıdaki adımları izleyin:
-
-1. `.env.local` dosyasını projenin kök dizininde oluşturun (varsa güncelleyin)
-2. SMTP sunucu ayarlarınızı aşağıdaki şekilde ekleyin:
-
-```
-EMAIL_HOST=smtp.sunucunuz.com
-EMAIL_PORT=587
-EMAIL_SECURE=false  # true = 465 portu için, false = diğer portlar için
-EMAIL_USER=kullanici@adresi.com
-EMAIL_PASSWORD=parolanız
-EMAIL_FROM=noreply@adresi.com
-```
-
-### Gmail SMTP Kullanımı
-
-Gmail kullanmak isterseniz:
-
-1. [Google Hesap Güvenliği](https://myaccount.google.com/security) sayfasına gidin
-2. İki faktörlü doğrulamayı etkinleştirin
-3. [Uygulama Şifreleri](https://myaccount.google.com/apppasswords) bölümünden yeni bir uygulama şifresi oluşturun
-4. `.env.local` dosyasında aşağıdaki ayarları kullanın:
-
-```
-EMAIL_HOST=smtp.gmail.com
-EMAIL_PORT=587
-EMAIL_SECURE=false
-EMAIL_USER=gmail_adresiniz@gmail.com
-EMAIL_PASSWORD=uygulama_şifreniz
-EMAIL_FROM=gmail_adresiniz@gmail.com
-```
-
-## Kurulum
-
-```bash
-# Bağımlılıkları yükle
-npm install
-
-# Geliştirme sunucusunu başlat
-npm run dev
-```
+- 🎮 Aktif, yaklaşan ve geçmiş CS2 maçlarını görüntüleme
+- ⭐ Favori maçları kaydetme ve takip etme
+- 🔔 Maç hatırlatıcıları oluşturma
+- 🌓 Koyu/Açık tema desteği
+- 🔍 Maç arama özelliği
+- 📱 Mobil uyumlu tasarım
 
 ## Teknolojiler
 
-- Next.js
-- React
-- Tailwind CSS
-- SWR
-- TypeScript
-- Node.js (E-posta gönderimi için)
-- Nodemailer (E-posta gönderimi için)
+- **Framework**: Next.js 15
+- **UI**: React 19, TailwindCSS
+- **Veri Yönetimi**: SWR (stale-while-revalidate)
+- **Kimlik Doğrulama**: NextAuth.js
+- **Veritabanı**: Supabase
+- **E-posta Servisi**: Gmail API
+- **Dil**: TypeScript
 
-## Kullanılan Teknolojiler
+## Kurulum
 
-- Next.js
-- React
-- TypeScript
-- Tailwind CSS
+1. Projeyi klonlayın:
+```bash
+git clone https://github.com/yourusername/esportsmatches.git
+cd esportsmatches
+```
 
-## Başlangıç
+2. Bağımlılıkları yükleyin:
+```bash
+npm install
+```
 
-### Gereksinimler
+3. `.env.local` dosyasını oluşturun ve gerekli ortam değişkenlerini ekleyin:
+```env
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_SECRET=your_nextauth_secret
+GMAIL_CLIENT_ID=your_gmail_client_id
+GMAIL_CLIENT_SECRET=your_gmail_client_secret
+GMAIL_REFRESH_TOKEN=your_gmail_refresh_token
+```
 
-- Node.js (v14 veya daha yeni)
-- npm veya yarn
+4. Geliştirme sunucusunu başlatın:
+```bash
+npm run dev
+```
 
-### Kurulum
+5. Tarayıcınızda `http://localhost:3000` adresini açın.
 
-1. Depoyu klonlayın
-   ```bash
-   git clone https://github.com/mehmethamzakadi/ESportsMatches.git
-   cd ESportsMatches
-   ```
+## Proje Yapısı
 
-2. Bağımlılıkları yükleyin
-   ```bash
-   npm install
-   # veya
-   yarn install
-   ```
+```
+src/
+├── app/                    # Next.js App Router sayfaları
+│   ├── api/               # API endpoint'leri
+│   ├── auth/              # Kimlik doğrulama sayfaları
+│   ├── favorites/         # Favori maçlar sayfası
+│   ├── past/              # Geçmiş maçlar sayfası
+│   └── upcoming/          # Yaklaşan maçlar sayfası
+├── components/            # UI bileşenleri
+│   ├── ui/               # Temel UI bileşenleri
+│   ├── AuthButtons.tsx   # Kimlik doğrulama butonları
+│   ├── Header.tsx        # Sayfa başlığı
+│   ├── MatchCard.tsx     # Maç kartı bileşeni
+│   ├── MatchList.tsx     # Maç listesi bileşeni
+│   ├── ReminderModal.tsx # Hatırlatıcı modal bileşeni
+│   ├── SearchBar.tsx     # Arama çubuğu
+│   ├── TabNavigation.tsx # Sekme navigasyonu
+│   └── ThemeToggle.tsx   # Tema değiştirme bileşeni
+├── hooks/                # React hook'ları
+│   └── useMatches.ts    # Maç verilerini yöneten hook
+├── lib/                 # Yardımcı kütüphaneler
+│   ├── api.ts          # API istemcisi
+│   ├── gmail.ts        # Gmail API entegrasyonu
+│   ├── hooks.ts        # Genel hook'lar
+│   └── ThemeContext.tsx # Tema yönetimi
+├── services/           # Servis katmanı
+│   └── FavoriteService.ts # Favori maç servisi
+├── types/             # TypeScript tip tanımlamaları
+│   └── match.ts      # Maç veri modeli
+└── utils/            # Yardımcı fonksiyonlar
+    └── eventEmitter.ts # Olay yönetimi
+```
 
-3. Geliştirme sunucusunu çalıştırın
-   ```bash
-   npm run dev
-   # veya
-   yarn dev
-   ```
+## Geliştirme Kuralları
 
-4. Uygulamayı görmek için tarayıcınızda [http://localhost:3000](http://localhost:3000) adresini açın
+### Kod Stili
+- TypeScript strict mode kullanımı
+- ESLint ve Prettier ile kod formatı
+- Tailwind CSS class isimlendirme kuralları
+- Component isimlendirme PascalCase
+- Hook isimlendirme camelCase
+
+### Git Commit Mesajları
+- feat: Yeni özellik
+- fix: Hata düzeltmesi
+- docs: Dokümantasyon değişiklikleri
+- style: Kod stili değişiklikleri
+- refactor: Kod yeniden düzenleme
+- test: Test ekleme veya düzenleme
+- chore: Genel bakım
+
+### Branch Stratejisi
+- main: Ana branch
+- develop: Geliştirme branch'i
+- feature/*: Yeni özellikler
+- bugfix/*: Hata düzeltmeleri
+- hotfix/*: Acil düzeltmeler
+
+### Code Review Kuralları
+- PR açıklaması zorunlu
+- En az bir reviewer onayı
+- CI/CD kontrollerinin başarılı olması
+- Test coverage kontrolü
+- TypeScript tip kontrolü
+
+### Deployment Süreci
+- Staging ortamına otomatik deployment
+- Production ortamına manuel onay ile deployment
+- Her deployment öncesi test suite çalıştırma
+- Deployment sonrası smoke test
+
+## Katkıda Bulunma
+
+1. Bu depoyu fork edin
+2. Yeni bir özellik dalı oluşturun (`git checkout -b feature/amazing-feature`)
+3. Değişikliklerinizi commit edin (`git commit -m 'feat: Add some amazing feature'`)
+4. Dalınıza push yapın (`git push origin feature/amazing-feature`)
+5. Bir Pull Request oluşturun
 
 ## Lisans
 
-MIT 
+Bu proje MIT lisansı altında lisanslanmıştır. Detaylar için [LICENSE](LICENSE) dosyasına bakın.
+
+## İletişim
+
+Proje Sahibi - [@yourusername](https://github.com/yourusername)
+
+Proje Linki: [https://github.com/yourusername/esportsmatches](https://github.com/yourusername/esportsmatches) 

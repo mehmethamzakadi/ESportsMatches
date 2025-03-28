@@ -1,4 +1,6 @@
 import { google } from 'googleapis';
+import { toLocalTime } from '@/utils/dateUtils';
+import { Match } from '@/types/match';
 
 const oauth2Client = new google.auth.OAuth2(
   process.env.GOOGLE_CLIENT_ID,
@@ -45,4 +47,22 @@ export async function sendEmail(to: string, subject: string, htmlContent: string
     console.error('Gmail API error:', error);
     throw error;
   }
+}
+
+export async function sendReminderEmail(to: string, match: Match, reminderTime: Date) {
+  const localMatchTime = toLocalTime(match.begin_at);
+  
+  const htmlContent = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <h2 style="color: #333;">Maç Hatırlatıcısı</h2>
+      <p>Takip ettiğiniz maç <strong>${localMatchTime}</strong>'de başlayacak:</p>
+      <div style="background-color: #f5f5f5; padding: 15px; border-radius: 5px; margin: 20px 0;">
+        <h3 style="margin: 0; color: #444;">${match.opponents[0]?.opponent.name || 'TBD'} vs ${match.opponents[1]?.opponent.name || 'TBD'}</h3>
+        <p style="margin: 10px 0 0; color: #666;">${match.league.name}</p>
+      </div>
+      <p style="color: #666; font-size: 14px;">Bu e-posta ${reminderTime.toLocaleString('tr-TR', { timeZone: 'Europe/Istanbul' })} tarihinde gönderilmiştir.</p>
+    </div>
+  `;
+
+  await sendEmail(to, `CS2 Maç Hatırlatıcısı: ${match.opponents[0]?.opponent.name || 'TBD'} vs ${match.opponents[1]?.opponent.name || 'TBD'}`, htmlContent);
 } 

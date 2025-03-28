@@ -4,6 +4,7 @@ import Modal from './ui/Modal';
 import AuthButtons from './AuthButtons';
 import toast from 'react-hot-toast';
 import { Match } from '@/types/match';
+import { formatDate } from '@/utils/dateUtils';
 
 interface ReminderModalProps {
   isOpen: boolean;
@@ -62,17 +63,6 @@ const ReminderModal: React.FC<ReminderModalProps> = ({ isOpen, onClose, match })
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  const formatDate = (dateString: string | null) => {
-    if (!dateString) return '';
-    return new Date(dateString).toLocaleString('tr-TR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
   };
 
   return (

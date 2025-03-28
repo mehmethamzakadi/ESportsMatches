@@ -10,6 +10,7 @@ import FavoriteService from '@/services/FavoriteService';
 import { StarIcon as StarIconOutline } from '@heroicons/react/24/outline';
 import { StarIcon as StarIconSolid } from '@heroicons/react/24/solid';
 import ReminderModal from './ReminderModal';
+import { formatDate } from '@/utils/dateUtils';
 
 interface MatchCardProps {
   match: Match;
@@ -96,18 +97,6 @@ const MatchCard: React.FC<MatchCardProps> = ({ match, showDates = true }) => {
         {score}
       </span>
     );
-  };
-
-  // Tarih formatı için yardımcı fonksiyon
-  const formatDate = (dateString: string | null) => {
-    if (!dateString) return null;
-    return new Date(dateString).toLocaleString('tr-TR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
   };
 
   return (

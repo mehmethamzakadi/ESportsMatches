@@ -3,16 +3,18 @@ description:
 globs: 
 alwaysApply: true
 ---
-# ESportsMatches Uygulama Analizi
+ # ESportsMatches Uygulama Analizi
 
 ## Uygulama Genel Bakış
-Bu uygulama, CS2 E-Spor maçlarını takip etmek için geliştirilmiş bir web uygulamasıdır. Aktif, yaklaşan ve geçmiş maçları görüntülemek ve favori maçlar eklemek gibi özellikleri içerir.
+Bu uygulama, CS2 E-Spor maçlarını takip etmek için geliştirilmiş modern bir web uygulamasıdır. Aktif, yaklaşan ve geçmiş maçları görüntüleme, favori maçlar ekleme ve maç hatırlatıcıları oluşturma gibi özellikleri içerir.
 
 ## Teknoloji Yığını
 - **Framework**: Next.js 15
 - **UI**: React 19, TailwindCSS
 - **Veri Yönetimi**: SWR (stale-while-revalidate)
-- **API**: PandaScore API
+- **Kimlik Doğrulama**: NextAuth.js
+- **Veritabanı**: Supabase
+- **E-posta Servisi**: Gmail API
 - **Dil**: TypeScript
 
 ## Proje Yapısı
@@ -43,8 +45,14 @@ Bu uygulama, CS2 E-Spor maçlarını takip etmek için geliştirilmiş bir web u
 - Favori maçları kaydetme
 - Favorilere eklenen maçları görüntüleme (`/favorites`)
 
+### Hatırlatıcılar
+- Maç hatırlatıcıları oluşturma
+- E-posta bildirimleri gönderme
+- Takvim entegrasyonu
+
 ### Tema Desteği
 - Koyu/Açık tema desteği
+- Tema tercihi kaydetme
 
 ## Veri Modelleri
 
@@ -58,6 +66,15 @@ Ana maç verisi modeli, PandaScore API'sinden alınan maç verilerini temsil ede
 - `GET /api/matches/upcoming`: Yaklaşan maçları getirme
 - `GET /api/matches/past`: Geçmiş maçları getirme
 
+### Gmail API
+- E-posta bildirimleri gönderme
+- Hatırlatıcı e-postaları
+
+### Supabase
+- Kullanıcı kimlik doğrulama
+- Favori maçları saklama
+- Kullanıcı tercihlerini kaydetme
+
 ## Bileşen Yapısı
 
 ### Sayfa Bileşenleri
@@ -65,6 +82,7 @@ Ana maç verisi modeli, PandaScore API'sinden alınan maç verilerini temsil ede
 - `app/upcoming/page.tsx`: Yaklaşan maçlar sayfası
 - `app/past/page.tsx`: Geçmiş maçlar sayfası
 - `app/favorites/page.tsx`: Favori maçlar sayfası
+- `app/auth/*`: Kimlik doğrulama sayfaları
 
 ### UI Bileşenleri
 - `Header`: Sayfa başlığı ve tema değiştirme
@@ -74,16 +92,65 @@ Ana maç verisi modeli, PandaScore API'sinden alınan maç verilerini temsil ede
 - `SearchBar`: Maç arama bileşeni
 - `ThemeToggle`: Tema değiştirme bileşeni
 - `ScrollToTop`: Sayfanın üstüne dönme bileşeni
+- `AuthButtons`: Kimlik doğrulama butonları
+- `ReminderModal`: Hatırlatıcı oluşturma modalı
 
 ## Servisler
 
 ### FavoriteService
 Favori maçları yönetme servisi.
 
+### GmailService
+E-posta bildirimleri gönderme servisi.
+
 ## Hook'lar
-- `useUpcomingMatches`: Yaklaşan maçları getiren hook
-- `useRunningMatches`: Aktif maçları getiren hook
-- `usePastMatches`: Geçmiş maçları getiren hook
+- `useMatches`: Maç verilerini yöneten hook
+- `useAuth`: Kimlik doğrulama durumunu yöneten hook
+- `useTheme`: Tema yönetimi hook'u
 
 ## Tema Yönetimi
-`ThemeContext` bileşeni ile koyu/açık tema tercihi yönetimi. 
+`ThemeContext` bileşeni ile koyu/açık tema tercihi yönetimi.
+
+## Güvenlik
+- NextAuth.js ile kimlik doğrulama
+- Supabase ile güvenli veri depolama
+- API anahtarları için ortam değişkenleri kullanımı
+
+## Performans Optimizasyonları
+- SWR ile veri önbellekleme
+- Sayfa bazlı kod bölümleme
+- Görüntü optimizasyonu
+- Lazy loading
+
+## Geliştirme Kuralları
+
+### Kod Stili
+- TypeScript strict mode kullanımı
+- ESLint ve Prettier ile kod formatı
+- Tailwind CSS class isimlendirme kuralları
+- Component isimlendirme PascalCase
+- Hook isimlendirme camelCase
+
+### Git Commit Mesajları
+- feat: Yeni özellik
+- fix: Hata düzeltmesi
+- docs: Dokümantasyon değişiklikleri
+- style: Kod stili değişiklikleri
+- refactor: Kod yeniden düzenleme
+- test: Test ekleme veya düzenleme
+- chore: Genel bakım
+
+### Branch Stratejisi
+- main: Ana branch
+- develop: Geliştirme branch'i
+- feature/*: Yeni özellikler
+- bugfix/*: Hata düzeltmeleri
+- hotfix/*: Acil düzeltmeler
+
+### Code Review Kuralları
+- PR açıklaması zorunlu
+- En az bir reviewer onayı
+- CI/CD kontrollerinin başarılı olması
+- Test coverage kontrolü
+- TypeScript tip kontrolü
+
