@@ -1,6 +1,7 @@
-import { createClient } from '@supabase/supabase-js';
-import { NextResponse } from 'next/server';
-import { sendEmail } from '@/lib/gmail';
+import { createClient } from "@supabase/supabase-js";
+import { NextResponse } from "next/server";
+import { sendEmail } from "@/lib/gmail";
+import { toLocalTime } from "@/utils/dateUtils";
 
 const supabase = createClient(
   process.env.SUPABASE_URL!,
@@ -10,59 +11,65 @@ const supabase = createClient(
 export async function GET(req: Request) {
   try {
     // Sadece GitHub Actions'dan gelen isteklere izin ver
-    const authHeader = req.headers.get('authorization');
+    const authHeader = req.headers.get("authorization");
     if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-      console.error('Unauthorized request:', { authHeader });
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      console.error("Unauthorized request:", { authHeader });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     // Şu anki zamandan 5 dakika sonrasına kadar olan hatırlatıcıları al
     const now = new Date();
     const fiveMinutesLater = new Date(now.getTime() + 5 * 60000);
 
-    console.log('Fetching reminders between:', { now, fiveMinutesLater });
+    console.log("Fetching reminders between:", { now, fiveMinutesLater });
 
     const { data: reminders, error } = await supabase
-      .from('reminders')
-      .select('*')
-      .eq('is_sent', false)
-      .gte('reminder_time', now.toISOString())
-      .lte('reminder_time', fiveMinutesLater.toISOString());
+      .from("reminders")
+      .select("*")
+      .eq("is_sent", false)
+      .gte("reminder_time", now.toISOString())
+      .lte("reminder_time", fiveMinutesLater.toISOString());
 
     if (error) {
-      console.error('Supabase error:', error);
+      console.error("Supabase error:", error);
       throw error;
     }
 
-    console.log('Found reminders:', reminders?.length || 0);
+    console.log("Found reminders:", reminders?.length || 0);
 
     // Her bir hatırlatıcı için mail gönder
     for (const reminder of reminders || []) {
       try {
-        const subject = 'Maç Hatırlatıcısı';
+        const subject = "Maç Hatırlatıcısı";
+
+        // UTC+3'e çevir
+        const matchDate = new Date(reminder.match_start_time);
+        matchDate.setHours(matchDate.getHours() + 3);
+        const localMatchTime = toLocalTime(matchDate);
+
         const htmlContent = `
           <h2>Maç Başlamak Üzere!</h2>
           <p>${reminder.team1_name} vs ${reminder.team2_name} maçı yakında başlayacak.</p>
-          <p>Maç Başlangıç: ${new Date(reminder.match_start_time).toLocaleString('tr-TR')}</p>
+          <p>Maç Başlangıç: ${localMatchTime}</p>
         `;
 
         await sendEmail(reminder.user_email, subject, htmlContent);
-        console.log('Email sent to:', reminder.user_email);
+        console.log("Email sent to:", reminder.user_email);
 
         // Hatırlatıcıyı gönderildi olarak işaretle
         const { error: updateError } = await supabase
-          .from('reminders')
+          .from("reminders")
           .update({ is_sent: true })
-          .eq('id', reminder.id);
+          .eq("id", reminder.id);
 
         if (updateError) {
-          console.error('Error updating reminder:', updateError);
+          console.error("Error updating reminder:", updateError);
           throw updateError;
         }
 
-        console.log('Reminder marked as sent:', reminder.id);
+        console.log("Reminder marked as sent:", reminder.id);
       } catch (error) {
-        console.error('Error processing reminder:', error);
+        console.error("Error processing reminder:", error);
         // Bir hatırlatıcıda hata olsa bile diğerlerine devam et
         continue;
       }
@@ -73,10 +80,10 @@ export async function GET(req: Request) {
       remindersSent: reminders?.length || 0,
     });
   } catch (error) {
-    console.error('Error sending reminders:', error);
+    console.error("Error sending reminders:", error);
     return NextResponse.json(
-      { error: 'Hatırlatıcılar gönderilemedi' },
+      { error: "Hatırlatıcılar gönderilemedi" },
       { status: 500 }
     );
   }
-} 
+}
