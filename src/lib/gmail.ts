@@ -50,6 +50,7 @@ export async function sendEmail(to: string, subject: string, htmlContent: string
 }
 
 export async function sendReminderEmail(to: string, match: Match, reminderTime: Date) {
+  // Maç saatini Türkiye saatine çevir
   const localMatchTime = toLocalTime(match.begin_at);
   
   const htmlContent = `
@@ -60,7 +61,7 @@ export async function sendReminderEmail(to: string, match: Match, reminderTime: 
         <h3 style="margin: 0; color: #444;">${match.opponents[0]?.opponent.name || 'TBD'} vs ${match.opponents[1]?.opponent.name || 'TBD'}</h3>
         <p style="margin: 10px 0 0; color: #666;">${match.league.name}</p>
       </div>
-      <p style="color: #666; font-size: 14px;">Bu e-posta ${reminderTime.toLocaleString('tr-TR', { timeZone: 'Europe/Istanbul' })} tarihinde gönderilmiştir.</p>
+      <p style="color: #666; font-size: 14px;">Bu e-posta ${localMatchTime} tarihinde gönderilmiştir.</p>
     </div>
   `;
 

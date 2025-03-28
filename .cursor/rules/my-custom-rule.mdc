@@ -1,9 +1,4 @@
----
-description: 
-globs: 
-alwaysApply: true
----
- # ESportsMatches Uygulama Analizi
+# ESportsMatches Uygulama Analizi
 
 ## Uygulama Genel Bakış
 Bu uygulama, CS2 E-Spor maçlarını takip etmek için geliştirilmiş modern bir web uygulamasıdır. Aktif, yaklaşan ve geçmiş maçları görüntüleme, favori maçlar ekleme ve maç hatırlatıcıları oluşturma gibi özellikleri içerir.
@@ -154,3 +149,8 @@ E-posta bildirimleri gönderme servisi.
 - Test coverage kontrolü
 - TypeScript tip kontrolü
 
+### Deployment Süreci
+- Staging ortamına otomatik deployment
+- Production ortamına manuel onay ile deployment
+- Her deployment öncesi test suite çalıştırma
+- Deployment sonrası smoke test 
