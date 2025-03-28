@@ -50,8 +50,10 @@ export async function sendEmail(to: string, subject: string, htmlContent: string
 }
 
 export async function sendReminderEmail(to: string, match: Match, reminderTime: Date) {
-  // Maç saatini Türkiye saatine çevir
-  const localMatchTime = toLocalTime(match.begin_at);
+  // UTC+3'e çevir
+  const matchDate = new Date(match.begin_at);
+  matchDate.setHours(matchDate.getHours() + 3);
+  const localMatchTime = toLocalTime(matchDate);
   
   const htmlContent = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
